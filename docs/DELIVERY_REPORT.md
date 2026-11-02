@@ -2,7 +2,7 @@
 
 初次交付记录：2026-10-30。保留原仓库个人使用定位；初始 main 仅有 README。当时的代码、文档和配置均在工作区，未提交、未推送、未创建正式版本，也未进行生产部署。以下保留该阶段的实现和验证证据。
 
-2026-11-02 更新：类型、Lint、单元 9 项、数据库集成 13 项、E2E 2 条、前后端构建、真实容器冒烟及部署模拟 10 场景已重新通过；CI 与 Release 增加实际容器验证门禁。前端已通过本地 CLI 部署至 https://zhian-study.netlify.app，并通过 Netlify API 设为公开；匿名 `/login` 返回 200，安全头已核验。代码 `4ecbb3c` 已推送 main，发布凭据已配置，云端 CI 首次运行中；正式 Release 与 GHCR 发布尚待验证，不计为已成功。
+2026-11-02 更新：类型、Lint、单元 9 项、数据库集成 13 项、E2E 2 条、前后端构建、真实容器冒烟及部署模拟 10 场景已重新通过；CI 与 Release 增加实际容器验证门禁。前端已通过本地 CLI 部署至 https://zhian-study.netlify.app，并通过 Netlify API 设为公开；匿名 `/login` 返回 200，安全头已核验。代码 `879069f` 的[云端 CI](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287145) 全部通过，[Release 工作流](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287140) 的全部 jobs（含容器门禁、版本、前端和双架构镜像发布）均成功，[v1.0.0](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.0) 已正式发布，Netlify 已由 Actions 部署成功。首次云端 E2E 的笔记保存竞态已修复并重新通过。
 
 用户目前暂无服务器，本次范围为部署前端并发布 API 镜像。生产 API/数据库未部署；Web 构建暂用 `VITE_API_BASE_URL=/api/v1`，Netlify `/api/*` 通过通用 Function 为所有 HTTP 方法返回明确说明 API 未部署的 503 JSON；真实 HTTPS API 基址请求不调用该 fallback。取得真实 HTTPS API 后替换构建变量并重新验收，线上注册、登录和业务数据流程尚不可用。
 
@@ -47,18 +47,18 @@ docker-compose.yml / netlify.toml / pnpm-lock.yaml
 
 ## 4. 未实现与明确限制
 
-| 项目               | 当前边界 / 后续工作                                                                                                                                                         |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 真实数据与专业目录 | 仅演示种子和样本目录；需合法数据源、完整年度目录及核验流程。适配器接口和手动导入已实现，无自动抓取服务                                                                      |
-| 编辑体验           | 管理端为严格校验的 JSON 编辑器，标签维护在 tags 数组；没有所见即所得编辑器和独立标签字典                                                                                    |
-| 富文本与媒体       | 支持段落、标题、引用、加粗、斜体、代码的安全 Markdown 子集和题目图片 URL；不执行任意 HTML，无文件存储/图片上传服务                                                          |
-| API 契约覆盖       | OpenAPI 可生成 TS paths/components，Axios 类型化适配和统计页已使用。部分考试/后台/导入响应仍为通用 envelope；不是全量响应校验或全端自动生成 SDK                             |
-| 多端               | 仅架构和 Bearer 后端能力，未实现 App/小程序 UI、微信登录、推送、订阅消息                                                                                                    |
-| 通知               | 站内截止提醒；没有短信/邮件/系统推送                                                                                                                                        |
-| 性能与运营         | 单进程限流、同步小批量 Excel 解析、实时聚合与随机查询。大题库/大导入需要队列、隔离解析、Redis/预聚合和压测；暂无容量承诺                                                    |
-| 知识点             | 当前薄弱分析按科目，分类可多级；没有独立知识图谱或算法推荐                                                                                                                  |
-| 数据生命周期       | 未实现自助账户注销、隐私政策确认页、个人数据导出和保留周期任务；需运营者制定政策后补充                                                                                      |
-| 生产验收           | Netlify 首次生产上传成功、公开访问与安全头已验证；代码已推送，云端 CI 首跑中，Release/GHCR 待验证。无服务器，API、远端 Nginx/HTTPS/恢复未部署或验收，不能称为完整业务已上线 |
+| 项目               | 当前边界 / 后续工作                                                                                                                                                                            |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 真实数据与专业目录 | 仅演示种子和样本目录；需合法数据源、完整年度目录及核验流程。适配器接口和手动导入已实现，无自动抓取服务                                                                                         |
+| 编辑体验           | 管理端为严格校验的 JSON 编辑器，标签维护在 tags 数组；没有所见即所得编辑器和独立标签字典                                                                                                       |
+| 富文本与媒体       | 支持段落、标题、引用、加粗、斜体、代码的安全 Markdown 子集和题目图片 URL；不执行任意 HTML，无文件存储/图片上传服务                                                                             |
+| API 契约覆盖       | OpenAPI 可生成 TS paths/components，Axios 类型化适配和统计页已使用。部分考试/后台/导入响应仍为通用 envelope；不是全量响应校验或全端自动生成 SDK                                                |
+| 多端               | 仅架构和 Bearer 后端能力，未实现 App/小程序 UI、微信登录、推送、订阅消息                                                                                                                       |
+| 通知               | 站内截止提醒；没有短信/邮件/系统推送                                                                                                                                                           |
+| 性能与运营         | 单进程限流、同步小批量 Excel 解析、实时聚合与随机查询。大题库/大导入需要队列、隔离解析、Redis/预聚合和压测；暂无容量承诺                                                                       |
+| 知识点             | 当前薄弱分析按科目，分类可多级；没有独立知识图谱或算法推荐                                                                                                                                     |
+| 数据生命周期       | 未实现自助账户注销、隐私政策确认页、个人数据导出和保留周期任务；需运营者制定政策后补充                                                                                                         |
+| 生产验收           | Netlify 首次生产上传成功、公开访问与安全头已验证；代码已推送，云端 CI 与 Release 全部 jobs 均成功，v1.0.0 已正式发布。无服务器，API、远端 Nginx/HTTPS/恢复未部署或验收，不能称为完整业务已上线 |
 
 前端设计使用 frontend-design 和 ui-ux-pro-max 的阅读优先、响应式与可访问性规则：纸白/深青、清晰数据标记、可见表单标签、键盘焦点、减少动效和图表表格替代。技能搜索脚本不可用，未声称使用了检索结果。
 
@@ -95,23 +95,25 @@ Dashboard；登录/注册；刷题中心（章节、专项、顺序、随机、�
 
 ## 8. 测试结果
 
-TypeScript、Lint、前后端构建通过；9 项单元/组件、13 项真实数据库集成、2 条完整浏览器闭环、10 个隔离 Linux 部署场景通过，2026-11-02 已全部复验。截图已检查桌面/手机布局。详细命令、先前失败与证据边界见 TESTING.md。未做大规模压测和独立安全审计。
+TypeScript、Lint、前后端构建通过；9 项单元/组件、13 项真实数据库集成、2 条完整浏览器闭环、10 个隔离 Linux 部署场景通过，2026-11-02 已全部复验且云端 CI 全绿。首次云端 E2E 的笔记保存竞态已修复并重新通过。截图已检查桌面/手机布局。详细命令、先前失败与证据边界见 TESTING.md。未做大规模压测和独立安全审计。
 
 ## 9. Docker 构建
 
 本地 linux/amd64 镜像构建成功，名称 `zhian-study-api:local`。最终生产依赖部署使用冻结锁文件和离线 pnpm deploy，含 Node22、API、Drizzle 迁移，不含 `.env`、TypeScript 开发依赖。用户 node/UID1000。已实际运行只读文件系统、cap-drop、no-new-privileges、数据库迁移、/health、/ready、分类查询；临时容器自动停止。
 
-双架构仅配置在 Actions，未在本地证明 arm64；未推送 GHCR。
+本地未验证 arm64 运行，Actions 已完成 linux/amd64 与 linux/arm64 镜像构建发布及 manifest 校验；manifest digest 和访问边界见 [CI/CD](CICD.md)。
 
 ## 10–13. Netlify / Actions / Semantic Release / GHCR
 
 `netlify.toml`：构建 Web、发布 apps/web/dist、SPA 回退、安全头、静态资源 immutable 缓存。`VITE_API_BASE_URL` 构建时注入，不硬编码生产地址。当前站点已公开且首次生产上传成功，匿名 `/login` 200 和安全头已核验。`/api/*` 优先 rewrite 到 `netlify/functions/api-unavailable.mjs`，所有 HTTP 方法均返回 API 未部署的 503 JSON；该通用 Function 替代会对 POST 返回 HTML 的静态 404 rewrite。构建变量暂为 `/api/v1`，配置真实 HTTPS API 基址后不调用 fallback。
 
+Netlify API 确认 Actions 的 v1.0.0 部署 `6ae8046280c64206131c6cbd` 为 `production` / `ready`；[永久部署地址](https://6ae8046280c64206131c6cbd--zhian-study.netlify.app)。匿名 `/login` 返回 200 且 CSP 正确；GET `/api/v1/users/me` 和 POST `/api/v1/auth/login` 均返回 503 `application/json`。
+
 `ci.yml`：PR 和相关分支推送执行安装、契约漂移检查、类型/Lint/单元/数据库、构建、浏览器和部署模拟测试。CI 和 Release verify 均复用 `.github/actions/verify-container` 构建真实 API 镜像，连接独立测试库，验证非 root、生产依赖、迁移、只读文件系统、就绪和 API 查询。`release.yml`：resolve → verify → version → frontend/image 并行，needs/outputs 传递 tag/version/sha；完整历史；main 发生漂移时拒绝发布未经验证的提交；手动只接受已有正式 Release tag。
 
 `.releaserc.json` + `scripts/release.mjs`：feat 次版本、fix/perf 补丁、BREAKING CHANGE 主版本、docs/chore/test/ci 默认不发布。自动 Git tag/GitHub Release 在同一工作流产生，不依赖 token-created-tag 二次触发。
 
-计划镜像：`ghcr.io/amazingz-sys/zhian-study-api:vX.Y.Z`、`:latest`、`:sha-<commit>`。手动恢复历史版本不移动 latest。Buildx/QEMU、缓存、OCI labels、SBOM/provenance 和 manifest 校验已配置；发布凭据已配置，首次云端发布结果尚待验证。
+已发布镜像：`ghcr.io/amazingz-sys/zhian-study-api:v1.0.0`，manifest 包含 linux/amd64 与 linux/arm64，摘要 `sha256:27804750fb7a7369ad3f55406489b80ad0ff7c7f756e24961757f8b40f28d8c8`。工作流配置正式版本、latest 和 sha 标签，手动恢复历史版本不移动 latest。Buildx/QEMU、缓存、OCI labels、SBOM/provenance 和 manifest 校验已执行；匿名 manifest 读取已验证，完整镜像匿名 pull 尚未执行，访问边界见 [CI/CD](CICD.md)。
 
 ## 14–15. 服务器脚本与 Nginx
 
@@ -133,12 +135,12 @@ TypeScript、Lint、前后端构建通过；9 项单元/组件、13 项真实数
 | GitHub 自带      | GITHUB_TOKEN（contents/package 最小权限，无全权限 PAT）                                                                             |
 | 服务器           | GHCR 只读凭据、数据库 TLS/备份、DNS、证书、Nginx、生产 env（root:600）                                                              |
 
-Netlify 首次前端发布成功且站点已公开，GitHub 发布凭据已配置；API、数据库、服务器、域名/TLS 等生产值仍待服务器准备后配置。用户还需在仓库设置 required CI checks，在 production Environment 设置所需策略，并在 Netlify UI 关闭 Git 自动生产发布。配置文件无法代替账号侧操作；GitHub 首次 CI 运行中，Release/GHCR 是否成功需以云端结果为准。
+Netlify 首次前端发布成功且站点已公开，GitHub 发布凭据已配置；API、数据库、服务器、域名/TLS 等生产值仍待服务器准备后配置。用户还需在仓库设置 required CI checks，在 production Environment 设置所需策略，Netlify 当前未关联 Git 自动构建。配置文件无法代替账号侧操作；GitHub CI 已全绿，正式 v1.0.0 和 Netlify Actions 发布均已有运行证据。
 
 ## 18. 首次部署
 
 1. 确认真实内容授权/核验、专业目录与生产数据政策；完成本报告列明的生产强化。
-2. 前端已由本地 CLI 首次公开发布，代码 `4ecbb3c` 已推送 main，发布凭据已配置；等待云端 CI 和首个正式 Release/GHCR 结果。通用 503 JSON fallback 修复随下一次提交推送并验证。
+2. 前端已先由本地 CLI 公开发布，再由 Actions 部署 v1.0.0；代码 `879069f` 已通过云端 CI 和 Release verify，正式 tag/Release 已创建。通用 503 JSON fallback 和首次云端 E2E 的笔记保存竞态修复均已随代码发布；镜像结果见 CI/CD。
 3. 配置独立 PostgreSQL、加密异地备份与恢复演练；准备 Linux Docker/Compose、宿主机 Nginx、curl、bash、flock、systemd、GNU coreutils。
 4. 安装 deploy 到受限目录，配置 env（root:600）、GHCR 只读登录、域名和 TLS，核对 CORS/代理 IP。
 5. `sudo ./deploy.sh v1.0.0`，验证 HTTPS API、浏览器跨域会话、数据隔离和正常使用。

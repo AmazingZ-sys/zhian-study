@@ -2,7 +2,7 @@
 
 初次验证日期：2026-10-30；最新本地复验：2026-11-02。macOS、Node 20.19.2、pnpm 10.26.2、Docker Desktop、PostgreSQL 16、Google Chrome。镜像为 Node 22 Alpine / linux/amd64。以下保留初次验证的细节与边界。
 
-2026-11-02 已重新通过类型、Lint、9 项单元/组件测试、13 项独立数据库集成测试、2 条 E2E、前后端构建、真实容器冒烟及 10 个部署模拟场景。CI 和 Release verify 阶段新增实际镜像构建及测试库容器冒烟门禁。前端已通过本地 CLI 部署至公开站点 https://zhian-study.netlify.app，匿名 `/login` 返回 200，安全头已核验。代码 `4ecbb3c` 已推送 main，发布凭据已配置，云端 CI 首次运行中；正式 Release 和 GHCR 首次发布尚待验证。
+2026-11-02 已重新通过类型、Lint、9 项单元/组件测试、13 项独立数据库集成测试、2 条 E2E、前后端构建、真实容器冒烟及 10 个部署模拟场景。CI 和 Release verify 阶段新增实际镜像构建及测试库容器冒烟门禁。前端已通过本地 CLI 部署至公开站点 https://zhian-study.netlify.app，匿名 `/login` 返回 200，安全头已核验。代码 `879069f` 的[云端 CI](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287145) 全部通过，[Release 工作流](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287140) 的全部 jobs（含容器门禁、版本、前端和双架构镜像发布）均成功，[v1.0.0](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.0) 正式发布且 Netlify Actions 部署成功。首次云端 E2E 暴露笔记保存完成前刷新页面的竞态，已等待保存响应后再刷新并重新通过。
 
 ## 已验证
 
@@ -22,6 +22,14 @@
 
 测试源：`packages/shared/src/rules.test.ts`、`apps/web/src/components/*.test.ts`、`apps/api/test/integration.test.ts`、`e2e/platform.spec.ts`、`scripts/test-deploy*.sh`、`scripts/test-container.sh`。
 
+## 云端发布证据（2026-11-02）
+
+- 提交 `879069f`：[CI 41383287145](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287145) 全绿；[Release 41383287140](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287140) 的全部 jobs（含真实容器门禁、版本、前端和双架构镜像发布）成功。
+- [v1.0.0 正式 Release](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.0) 已创建；首次云端 E2E 的笔记保存竞态修复后重新通过。
+- Netlify API 确认 Actions 部署处于 `production`、`ready`，title 为 `v1.0.0`，deploy ID 为 `6ae8046280c64206131c6cbd`；[永久部署地址](https://6ae8046280c64206131c6cbd--zhian-study.netlify.app)。
+- 匿名 `/login` 返回 200，CSP 等安全头正确；GET `/api/v1/users/me` 和 POST `/api/v1/auth/login` 均返回 503、`application/json`，明确表示 API 未部署。
+- GHCR `ghcr.io/amazingz-sys/zhian-study-api:v1.0.0` 发布成功，manifest 包含 `linux/amd64` 和 `linux/arm64`；digest 为 `sha256:27804750fb7a7369ad3f55406489b80ad0ff7c7f756e24961757f8b40f28d8c8`。匿名 manifest 读取已通过；完整镜像匿名 pull 尚未执行。
+
 ## 核心断言
 
 - 注册登录、密码校验、资料隔离、后台权限；禁用账户立即阻断已有 token。
@@ -38,7 +46,7 @@
 
 隔离临时目录模拟 docker/nginx/curl/systemctl/flock：首次成功、迁移失败、HTTP 健康失败、切换后 Nginx 校验失败、reload 失败、锁冲突、再次成功、回滚前版、回滚指定版、拒绝不安全 env 权限。断言 current 与运行镜像不保留失败版，回滚不执行迁移。
 
-模拟结果证明脚本控制流，不证明 Linux/systemd/Nginx/HTTPS/GHCR 生产环境可用。容器测试另外验证真实镜像和 PostgreSQL，但没有代理层。
+模拟结果证明脚本控制流，不证明 Linux/systemd/Nginx/HTTPS 生产服务器环境可用；GHCR 发布已有独立云端证据。容器测试另外验证真实镜像和 PostgreSQL，但没有代理层。
 
 ## 浏览器与可视检查
 
@@ -52,8 +60,8 @@
 
 ## 未验证
 
-GitHub Actions 首次云端运行结果、required checks 阻断合并、Semantic Release/tag/Release 创建、GHCR 推送/双架构 manifest、远端拉取、宿主机 Nginx reload、线上恢复、异地备份恢复演练。
+required checks 阻断合并、GHCR 匿名拉取、arm64 实机运行、远端服务器拉取、宿主机 Nginx reload、线上恢复、异地备份恢复演练。GHCR 发布结果和 manifest digest 见 [CI/CD](CICD.md)。
 
-用户目前暂无服务器，本次仅部署前端并发布镜像；API 和生产数据库尚未部署。前端暂用 `VITE_API_BASE_URL=/api/v1`，Netlify `/api/*` 配置通用 Function，为所有 HTTP 方法返回明确的 API 未部署 503 JSON；这修复了静态 404 rewrite 对 POST 返回 HTML 的问题，真实 HTTPS API 基址请求不调用该 fallback。当前 E2E 证据来自本地 Web/API/测试库，不能据此宣称线上注册、登录和业务流程已可用；真实 API 上线后需替换构建地址并重新验收。
+用户目前暂无服务器，本次仅部署前端并发布镜像；API 和生产数据库尚未部署。前端暂用 `VITE_API_BASE_URL=/api/v1`，Netlify `/api/*` 配置通用 Function，为所有 HTTP 方法返回明确的 API 未部署 503 JSON；这修复了静态 404 rewrite 对 POST 返回 HTML 的问题，真实 HTTPS API 基址请求不调用该 fallback。当前 E2E 证据来自本地与云端 CI 的 Web/API/测试库，不能据此宣称线上注册、登录和业务流程已可用；真实 API 上线后需替换构建地址并重新验收。
 
 没有负载/压力/长稳测试、独立安全审计、完整 WCAG 审计。不能根据当前功能测试宣称可承受大规模并发。

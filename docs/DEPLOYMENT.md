@@ -1,6 +1,8 @@
 # 部署总览
 
-2026-11-02：全部本地检查已复验通过（类型、Lint、单元 9 项、集成 13 项、E2E 2 条、构建、容器冒烟、部署模拟 10 场景）。CI/Release 已增加容器验证门禁；代码 `4ecbb3c` 已推送 main，发布凭据已配置，云端 CI 首次运行中；正式 Release 和 GHCR 发布待验证。用户暂无服务器，本次仅部署前端并发布 API 镜像。
+2026-11-02：全部本地检查已复验通过（类型、Lint、单元 9 项、集成 13 项、E2E 2 条、构建、容器冒烟、部署模拟 10 场景）。CI/Release 已增加容器验证门禁；代码 `879069f` 的[云端 CI](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287145) 全部通过，[Release 工作流](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287140) 的全部 jobs（含容器门禁、版本、前端和双架构镜像发布）均成功，[v1.0.0](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.0) 正式发布且 Netlify Actions 部署成功。用户暂无服务器，本次仅部署前端并发布 API 镜像。
+
+首次云端 E2E 的笔记保存竞态已修复并重新通过；详细验证证据见 [测试结果](TESTING.md)。
 
 ## 本地
 
@@ -8,13 +10,15 @@ pnpm install；复制 .env.example 为 .env；docker compose up -d db；pnpm db:
 
 ## Netlify
 
-站点 https://zhian-study.netlify.app 已通过本地 CLI 首次生产上传成功，并通过 Netlify API 设为公开；匿名访问 `/login` 返回 200，安全头已核验。发布目录 apps/web/dist，构建 pnpm --filter @zhian/web build；VITE_API_BASE_URL 必须构建时注入；SPA fallback，安全头与 assets immutable 缓存。后续生产发布由 GitHub Actions 执行，在 Netlify UI 关闭 Git 自动部署。
+站点 https://zhian-study.netlify.app 已通过本地 CLI 首次生产上传成功，并通过 Netlify API 设为公开；匿名访问 `/login` 返回 200，安全头已核验；v1.0.0 已由 Actions 再次部署成功。发布目录 apps/web/dist，构建 pnpm --filter @zhian/web build；VITE_API_BASE_URL 必须构建时注入；SPA fallback，安全头与 assets immutable 缓存。生产发布由 GitHub Actions 执行，Netlify 当前未关联 Git 自动构建。
+
+Netlify API 确认正式部署 `6ae8046280c64206131c6cbd` 为 `production` / `ready`、title `v1.0.0`；[永久部署地址](https://6ae8046280c64206131c6cbd--zhian-study.netlify.app)。匿名 `/login` 为 200 且 CSP 正确，GET `/api/v1/users/me` 和 POST `/api/v1/auth/login` 均为 503 `application/json`。
 
 当前构建使用 `VITE_API_BASE_URL=/api/v1`。`/api/*` 优先 rewrite 到 `netlify/functions/api-unavailable.mjs`，为所有 HTTP 方法返回说明 API 尚未部署的 503 JSON；注册、登录和业务数据功能待 API 接入。取得真实 API 后，将构建变量换为 `https://实际API域名/api/v1` 并重新构建，配置该 API 的 CORS/Cookie。真实 HTTPS API 基址请求不再调用 Netlify fallback。
 
 ## API
 
-Docker 多阶段、非 root、端口 3000，包含迁移命令，目标镜像 ghcr.io/amazingz-sys/zhian-study-api:vX.Y.Z；本地构建及真实数据库容器冒烟已通过，首次 GHCR 发布待云端验证。生产不可使用 latest。服务器部署配置保留，待有服务器、独立数据库和域名后使用。
+Docker 多阶段、非 root、端口 3000，包含迁移命令，已发布镜像 `ghcr.io/amazingz-sys/zhian-study-api:v1.0.0`（linux/amd64、linux/arm64）；本地构建、真实数据库容器冒烟及云端容器门禁已通过；manifest 摘要和访问边界见 [CI/CD](CICD.md)。生产不可使用 latest。服务器部署配置保留，待有服务器、独立数据库和域名后使用。
 
 ## 生产环境
 

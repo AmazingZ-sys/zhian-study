@@ -2,7 +2,7 @@
 
 个人长期备考与选岗工作台。Vue 3 Web + Hono API + PostgreSQL，pnpm Monorepo。学习记录、试卷、收藏、笔记和管理操作均由 API 持久化，不以固定数据冒充用户数据。
 
-当前为可本地运行、带自动发布和服务器部署配置的第一阶段实现。2026-11-02 已重新通过全部本地检查；前端已通过本地 CLI 部署到公开站点 [zhian-study.netlify.app](https://zhian-study.netlify.app)，匿名访问 `/login` 返回 200，安全头已核验。代码 `4ecbb3c` 已推送 main，发布凭据已配置，云端 CI 首次运行中；正式 Release 和 GHCR 发布尚待验证。
+当前为可本地运行、带自动发布和服务器部署配置的第一阶段实现。2026-11-02 已重新通过全部本地检查；前端已通过本地 CLI 部署到公开站点 [zhian-study.netlify.app](https://zhian-study.netlify.app)，匿名访问 `/login` 返回 200，安全头已核验。代码 `879069f` 已推送 main，[云端 CI](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287145) 全部通过；[Release 工作流](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287140) 的全部 jobs（含容器门禁、版本、前端和双架构镜像发布）均成功，[v1.0.0](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.0) 已正式发布，Netlify 已由 Actions 部署。
 
 用户目前暂无服务器，本次仅部署前端并发布 API 镜像。前端构建暂用 `VITE_API_BASE_URL=/api/v1`；Netlify 的 `/api/*` 配置通用 Function fallback，所有 HTTP 方法均返回明确说明 API 尚未部署的 503 JSON，注册、登录和业务数据功能需后续接入真实 API。默认内容只有原创示例题、虚构岗位和使用指南，均明确标记演示；真实题库、招录数据和专业目录需合法接入。完整边界见 [交付报告](docs/DELIVERY_REPORT.md)。
 
@@ -72,7 +72,7 @@ pnpm test:container
 
 E2E 默认复用已有开发服务，会向其数据库写入明确的测试记录。若需要隔离，先停止 `pnpm dev`，再设置 `DATABASE_URL` 为测试库启动 E2E。截图/报告位于 `test-results/`、`playwright-report/`。容器冒烟使用独立测试库和本地端口 3300，结束后删除临时 API 容器，保留数据库。
 
-2026-11-02 复验：类型、Lint、9 项单元/组件测试、13 项数据库集成测试、2 条 E2E、前后端构建、容器冒烟及 10 个部署场景均通过。CI 和 Release 的验证阶段均加入真实镜像构建与数据库容器冒烟门禁；云端执行结果另行记录。
+2026-11-02 复验：类型、Lint、9 项单元/组件测试、13 项数据库集成测试、2 条 E2E、前后端构建、容器冒烟及 10 个部署场景均通过。CI 和 Release 的验证阶段均加入真实镜像构建与数据库容器冒烟门禁，并已在云端 CI 和 Release verify 通过。首次云端 E2E 的笔记保存竞态已修复并重新通过。
 
 ## 结构
 
@@ -94,7 +94,7 @@ docs/                     产品、架构、部署及交付证据
 
 采用 Conventional Commits。main 验证后由 Semantic Release 创建版本，再并行发布 Netlify/GHCR。无版本变化不发布。手动 `workflow_dispatch` 接受已有正式 tag，可恢复失败部署，不重复创建 Release。
 
-预期镜像：`ghcr.io/amazingz-sys/zhian-study-api:vX.Y.Z`，当前待首次 GHCR 发布验证。服务器部署留待取得服务器后进行；届时需要 Docker/Compose、宿主机 Nginx、curl、bash、flock、systemd、GNU coreutils，不安装 Node/pnpm。在服务器部署目录执行：
+已发布镜像：`ghcr.io/amazingz-sys/zhian-study-api:v1.0.0`（linux/amd64、linux/arm64），manifest 摘要及访问边界见 [CI/CD](docs/CICD.md)。服务器部署留待取得服务器后进行；届时需要 Docker/Compose、宿主机 Nginx、curl、bash、flock、systemd、GNU coreutils，不安装 Node/pnpm。在服务器部署目录执行：
 
 ```bash
 sudo ./deploy.sh v1.0.0
@@ -105,7 +105,7 @@ sudo env CONFIRM_DB_COMPATIBLE=yes ./rollback.sh v1.0.0
 
 部署将 tag 解析为镜像摘要；回滚使用成功快照中的摘要、Compose 和环境配置。数据库不自动降级。首次配置、备份、HTTPS、权限和失败恢复见 [服务器手册](docs/SERVER_DEPLOYMENT.md)。
 
-GitHub 已配置 Secret `NETLIFY_AUTH_TOKEN`、Variables `NETLIFY_SITE_ID` 与 `VITE_API_BASE_URL`；production Environment 和 required CI checks 按仓库策略设置。首次前端上传已通过本地 Netlify CLI 成功，后续由 Actions 发布；Netlify 必须关闭 Git 自动生产发布。取得真实 HTTPS API 后，将 `VITE_API_BASE_URL` 从 `/api/v1` 换为完整 API 地址并重新构建，按实际前端域名配置 API CORS/Cookie。使用真实 HTTPS API 基址后，请求不再调用 Netlify fallback。推荐前后端同站子域，避免第三方 Cookie 被阻断。
+GitHub 已配置 Secret `NETLIFY_AUTH_TOKEN`、Variables `NETLIFY_SITE_ID` 与 `VITE_API_BASE_URL`；production Environment 和 required CI checks 按仓库策略设置。首次前端上传已通过本地 Netlify CLI 成功，v1.0.0 已由 Actions 发布；Netlify 当前未关联 Git 自动构建，由 Actions CLI 发布。取得真实 HTTPS API 后，将 `VITE_API_BASE_URL` 从 `/api/v1` 换为完整 API 地址并重新构建，按实际前端域名配置 API CORS/Cookie。使用真实 HTTPS API 基址后，请求不再调用 Netlify fallback。推荐前后端同站子域，避免第三方 Cookie 被阻断。
 
 ## 文档
 
