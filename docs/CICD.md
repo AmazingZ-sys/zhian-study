@@ -1,6 +1,6 @@
 # CI/CD
 
-2026-11-02 状态：类型、Lint、单元 9 项、集成 13 项、E2E 2 条、构建、容器和部署模拟 10 场景已本地复验通过；首次代码推送、GitHub Actions 执行、正式 Release 和 GHCR 发布尚待云端验证。Netlify 站点 https://zhian-study.netlify.app 已创建，首次生产上传正在进行。
+2026-11-02 状态：类型、Lint、单元 9 项、集成 13 项、E2E 2 条、构建、容器和部署模拟 10 场景已本地复验通过；代码 `4ecbb3c` 已推送 main，发布凭据已配置，云端 CI 首次运行中。前端已通过本地 CLI 部署至公开站点 https://zhian-study.netlify.app，匿名 `/login` 返回 200，安全头正确；正式 Release 和 GHCR 发布尚待验证。
 
 ## 提交与发布
 
@@ -21,9 +21,9 @@ workflow_dispatch 输入已存在 vX.Y.Z，校验正式 GitHub Release 和 tag�
 
 ## 配置
 
-Secrets NETLIFY_AUTH_TOKEN；Variables NETLIFY_SITE_ID、VITE_API_BASE_URL。GHCR 为 ghcr.io/amazingz-sys/zhian-study-api。首次前端上传使用已登录的本地 Netlify CLI，后续由 Actions 用 CLI 发布并保留日志；Netlify 必须关闭 Git 自动发布。
+已配置 Secret NETLIFY_AUTH_TOKEN 和 Variables NETLIFY_SITE_ID、VITE_API_BASE_URL。GHCR 为 ghcr.io/amazingz-sys/zhian-study-api。首次前端上传已通过本地 Netlify CLI 成功，后续由 Actions 用 CLI 发布并保留日志；Netlify 必须关闭 Git 自动发布。
 
-用户暂无服务器，本次发布范围为前端与 GHCR 镜像，不执行服务器部署。`VITE_API_BASE_URL` 暂设 `/api/v1`；Netlify `/api/*` 返回 API 未部署的 404 JSON。取得真实 HTTPS API 后修改该变量并重新构建，同时配置 API 的 CORS/Cookie。
+用户暂无服务器，本次发布范围为前端与 GHCR 镜像，不执行服务器部署。`VITE_API_BASE_URL` 暂设 `/api/v1`；Netlify `/api/*` 通过通用 Function 为所有 HTTP 方法返回 API 未部署的 503 JSON。取得真实 HTTPS API 后修改该变量并重新构建，同时配置 API 的 CORS/Cookie；真实 API 请求不再调用 fallback。
 
 ## 故障恢复
 
@@ -31,4 +31,4 @@ Release 成功但某部署失败：查看相应日志，修正环境，workflow_
 
 ## 待真实验证
 
-GitHub checks、正式 tag/Release、Netlify 首次生产上传结果、GHCR push 与多架构拉取仍待真实结果，本地配置检查不能代替云端运行证据。暂无服务器，因此宿主机 Nginx/HTTPS 和远端容器部署不在此次验证范围。
+GitHub checks 首次运行结果、正式 tag/Release、GHCR push 与多架构拉取仍待真实结果，本地配置检查不能代替云端运行证据。暂无服务器，因此宿主机 Nginx/HTTPS 和远端容器部署不在此次验证范围。

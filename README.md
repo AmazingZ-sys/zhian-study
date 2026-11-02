@@ -2,9 +2,9 @@
 
 个人长期备考与选岗工作台。Vue 3 Web + Hono API + PostgreSQL，pnpm Monorepo。学习记录、试卷、收藏、笔记和管理操作均由 API 持久化，不以固定数据冒充用户数据。
 
-当前为可本地运行、带自动发布和服务器部署配置的第一阶段实现。2026-11-02 已重新通过全部本地检查；Netlify 站点 [zhian-study.netlify.app](https://zhian-study.netlify.app) 已创建，正在首次生产上传。GitHub Actions、正式 Release 和 GHCR 发布待首次推送及云端验证。
+当前为可本地运行、带自动发布和服务器部署配置的第一阶段实现。2026-11-02 已重新通过全部本地检查；前端已通过本地 CLI 部署到公开站点 [zhian-study.netlify.app](https://zhian-study.netlify.app)，匿名访问 `/login` 返回 200，安全头已核验。代码 `4ecbb3c` 已推送 main，发布凭据已配置，云端 CI 首次运行中；正式 Release 和 GHCR 发布尚待验证。
 
-用户目前暂无服务器，本次仅部署前端并发布 API 镜像。前端构建暂用 `VITE_API_BASE_URL=/api/v1`；Netlify 的 `/api/*` 返回明确说明 API 尚未部署的 404 JSON，注册、登录和业务数据功能需后续接入真实 API。默认内容只有原创示例题、虚构岗位和使用指南，均明确标记演示；真实题库、招录数据和专业目录需合法接入。完整边界见 [交付报告](docs/DELIVERY_REPORT.md)。
+用户目前暂无服务器，本次仅部署前端并发布 API 镜像。前端构建暂用 `VITE_API_BASE_URL=/api/v1`；Netlify 的 `/api/*` 配置通用 Function fallback，所有 HTTP 方法均返回明确说明 API 尚未部署的 503 JSON，注册、登录和业务数据功能需后续接入真实 API。默认内容只有原创示例题、虚构岗位和使用指南，均明确标记演示；真实题库、招录数据和专业目录需合法接入。完整边界见 [交付报告](docs/DELIVERY_REPORT.md)。
 
 ## 本地启动
 
@@ -105,7 +105,7 @@ sudo env CONFIRM_DB_COMPATIBLE=yes ./rollback.sh v1.0.0
 
 部署将 tag 解析为镜像摘要；回滚使用成功快照中的摘要、Compose 和环境配置。数据库不自动降级。首次配置、备份、HTTPS、权限和失败恢复见 [服务器手册](docs/SERVER_DEPLOYMENT.md)。
 
-GitHub 需 Secret `NETLIFY_AUTH_TOKEN`，Variables `NETLIFY_SITE_ID`、`VITE_API_BASE_URL`，production Environment 和 required CI checks。首次上传使用已登录的本地 Netlify CLI，后续由 Actions 发布；Netlify 必须关闭 Git 自动生产发布。取得真实 HTTPS API 后，将 `VITE_API_BASE_URL` 从 `/api/v1` 换为完整 API 地址并重新构建，按实际前端域名配置 API CORS/Cookie。推荐前后端同站子域，避免第三方 Cookie 被阻断。
+GitHub 已配置 Secret `NETLIFY_AUTH_TOKEN`、Variables `NETLIFY_SITE_ID` 与 `VITE_API_BASE_URL`；production Environment 和 required CI checks 按仓库策略设置。首次前端上传已通过本地 Netlify CLI 成功，后续由 Actions 发布；Netlify 必须关闭 Git 自动生产发布。取得真实 HTTPS API 后，将 `VITE_API_BASE_URL` 从 `/api/v1` 换为完整 API 地址并重新构建，按实际前端域名配置 API CORS/Cookie。使用真实 HTTPS API 基址后，请求不再调用 Netlify fallback。推荐前后端同站子域，避免第三方 Cookie 被阻断。
 
 ## 文档
 

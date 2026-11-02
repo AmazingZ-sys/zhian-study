@@ -2,7 +2,7 @@
 
 初次验证日期：2026-10-30；最新本地复验：2026-11-02。macOS、Node 20.19.2、pnpm 10.26.2、Docker Desktop、PostgreSQL 16、Google Chrome。镜像为 Node 22 Alpine / linux/amd64。以下保留初次验证的细节与边界。
 
-2026-11-02 已重新通过类型、Lint、9 项单元/组件测试、13 项独立数据库集成测试、2 条 E2E、前后端构建、真实容器冒烟及 10 个部署模拟场景。CI 和 Release verify 阶段新增实际镜像构建及测试库容器冒烟门禁。Netlify 站点 https://zhian-study.netlify.app 已创建，首次生产上传正在进行；GitHub Actions、正式 Release 和 GHCR 首次发布待推送后验证，尚无云端成功结论。
+2026-11-02 已重新通过类型、Lint、9 项单元/组件测试、13 项独立数据库集成测试、2 条 E2E、前后端构建、真实容器冒烟及 10 个部署模拟场景。CI 和 Release verify 阶段新增实际镜像构建及测试库容器冒烟门禁。前端已通过本地 CLI 部署至公开站点 https://zhian-study.netlify.app，匿名 `/login` 返回 200，安全头已核验。代码 `4ecbb3c` 已推送 main，发布凭据已配置，云端 CI 首次运行中；正式 Release 和 GHCR 首次发布尚待验证。
 
 ## 已验证
 
@@ -52,8 +52,8 @@
 
 ## 未验证
 
-GitHub Actions 云端执行、required checks 阻断合并、Semantic Release/tag/Release 创建、Netlify 首次 Production 上传结果、GHCR 推送/双架构 manifest、远端拉取、宿主机 Nginx reload、线上恢复、异地备份恢复演练。
+GitHub Actions 首次云端运行结果、required checks 阻断合并、Semantic Release/tag/Release 创建、GHCR 推送/双架构 manifest、远端拉取、宿主机 Nginx reload、线上恢复、异地备份恢复演练。
 
-用户目前暂无服务器，本次仅部署前端并发布镜像；API 和生产数据库尚未部署。前端暂用 `VITE_API_BASE_URL=/api/v1`，Netlify `/api/*` 返回明确的 API 未部署 404 JSON。当前 E2E 证据来自本地 Web/API/测试库，不能据此宣称线上注册、登录和业务流程已可用；真实 API 上线后需替换构建地址并重新验收。
+用户目前暂无服务器，本次仅部署前端并发布镜像；API 和生产数据库尚未部署。前端暂用 `VITE_API_BASE_URL=/api/v1`，Netlify `/api/*` 配置通用 Function，为所有 HTTP 方法返回明确的 API 未部署 503 JSON；这修复了静态 404 rewrite 对 POST 返回 HTML 的问题，真实 HTTPS API 基址请求不调用该 fallback。当前 E2E 证据来自本地 Web/API/测试库，不能据此宣称线上注册、登录和业务流程已可用；真实 API 上线后需替换构建地址并重新验收。
 
 没有负载/压力/长稳测试、独立安全审计、完整 WCAG 审计。不能根据当前功能测试宣称可承受大规模并发。

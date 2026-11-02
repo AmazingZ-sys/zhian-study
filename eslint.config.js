@@ -29,4 +29,8 @@ export default ts.config(
     files: ['scripts/**/*.mjs'],
     languageOptions: { globals: { process: 'readonly', console: 'readonly', URL: 'readonly' } },
   },
+  {
+    files: ['netlify/functions/**/*.mjs'],
+    languageOptions: { globals: { Response: 'readonly' } },
+  },
 );

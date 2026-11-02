@@ -34,7 +34,16 @@ test('注册登录 → 错题收藏 → 模考报告 → 岗位公告 → 移动
   await page.getByRole('button', { name: '收藏', exact: true }).click();
   await expect(page.getByRole('button', { name: '已收藏', exact: true })).toBeVisible();
   await page.getByLabel('个人笔记').fill('沸点需要明确大气压条件');
-  await page.getByRole('button', { name: '保存笔记' }).click();
+  const [noteResponse] = await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === 'PATCH' &&
+        /\/questions\/[^/]+\/note$/.test(new URL(response.url()).pathname),
+    ),
+    page.getByRole('button', { name: '保存笔记', exact: true }).click(),
+  ]);
+  expect(noteResponse.ok()).toBe(true);
+  await expect(page.getByRole('button', { name: '笔记已保存', exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByLabel('个人笔记')).toHaveValue('沸点需要明确大气压条件');
   await expect(page.getByText('错误 ·', { exact: false })).toBeVisible();
@@ -73,7 +82,11 @@ test('注册登录 → 错题收藏 → 模考报告 → 岗位公告 → 移动
   await page.goto('/jobs/favorites');
   await expect(page.locator('.list-card')).toContainText('综合管理岗');
   await page.goto('/announcements');
-  await page.locator('.list-card').filter({hasText:'使用指南'}).getByRole('link', { name: '阅读全文' }).click();
+  await page
+    .locator('.list-card')
+    .filter({ hasText: '使用指南' })
+    .getByRole('link', { name: '阅读全文' })
+    .click();
   await expect(page.getByRole('heading', { level: 1 })).toContainText('使用指南');
   await page.getByRole('button', { name: '收藏公告' }).click();
   await expect(page.getByRole('button', { name: '已收藏', exact: true })).toBeVisible();
