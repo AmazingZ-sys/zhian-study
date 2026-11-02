@@ -1,0 +1,54 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main, develop, 'feature/**', 'fix/**', 'codex/**']
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: zhian
+          POSTGRES_PASSWORD: ci-local-only
+          POSTGRES_DB: zhian_test
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U zhian -d zhian_test" --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      DATABASE_URL: postgresql://zhian:ci-local-only@localhost:5432/zhian_test
+      TEST_DATABASE_URL: postgresql://zhian:ci-local-only@localhost:5432/zhian_test
+      JWT_SECRET: ci-only-key-with-more-than-thirty-two-characters
+      CORS_ORIGINS: http://127.0.0.1:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm api:generate && git diff --exit-code -- docs/generated/openapi.json packages/api-client/src/generated.ts
+      - run: cp .env.example .env
+      - run: pnpm db:migrate && pnpm db:seed
+      - run: pnpm typecheck && pnpm lint && pnpm test && pnpm test:integration
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - run: pnpm test:deploy
+      - uses: ./.github/actions/verify-container
+        with:
+          postgres-container: ${{ job.services.postgres.id }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

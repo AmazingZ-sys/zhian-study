@@ -1,0 +1,35 @@
+name: Verify API container
+description: Build the production image and smoke test it against the job's PostgreSQL service.
+inputs:
+  postgres-container:
+    description: Container ID of the PostgreSQL service with the zhian_test database.
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: docker/setup-buildx-action@v3
+    - uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: apps/api/Dockerfile
+        load: true
+        tags: zhian-study-api:local
+        cache-from: type=gha,scope=api-verification
+        cache-to: type=gha,mode=max,scope=api-verification
+    - name: Test production container
+      shell: bash
+      env:
+        POSTGRES_CONTAINER: ${{ inputs.postgres-container }}
+      run: |
+        set -euo pipefail
+        smoke_network="zhian-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+        docker network create "$smoke_network" >/dev/null
+        cleanup() {
+          docker network disconnect "$smoke_network" "$POSTGRES_CONTAINER" >/dev/null 2>&1 || true
+          docker network rm "$smoke_network" >/dev/null 2>&1 || true
+        }
+        trap cleanup EXIT
+        docker network connect --alias db "$smoke_network" "$POSTGRES_CONTAINER"
+        TEST_CONTAINER_NETWORK="$smoke_network" \
+          TEST_CONTAINER_DATABASE_URL=postgresql://zhian:ci-local-only@db:5432/zhian_test \
+          pnpm test:container

@@ -1,0 +1,226 @@
+name: Release and deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing official release tag, e.g. v1.0.0 (no new release is created)'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.resolve.outputs.ref }}
+      manual: ${{ steps.resolve.outputs.manual }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: resolve
+        env:
+          TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = workflow_dispatch ]; then
+            [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid release tag'; exit 1; }
+            git rev-parse --verify "refs/tags/$TAG^{commit}" >/dev/null
+            gh release view "$TAG" --json isDraft,isPrerelease --jq 'select(.isDraft == false and .isPrerelease == false)' | grep -q isDraft
+            echo "ref=$TAG" >> "$GITHUB_OUTPUT"
+            echo 'manual=true' >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+            echo 'manual=false' >> "$GITHUB_OUTPUT"
+          fi
+  verify:
+    needs: resolve
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: zhian
+          POSTGRES_PASSWORD: ci-local-only
+          POSTGRES_DB: zhian_test
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U zhian -d zhian_test" --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      DATABASE_URL: postgresql://zhian:ci-local-only@localhost:5432/zhian_test
+      TEST_DATABASE_URL: postgresql://zhian:ci-local-only@localhost:5432/zhian_test
+      JWT_SECRET: ci-only-key-with-more-than-thirty-two-characters
+      CORS_ORIGINS: http://127.0.0.1:5173
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: cp .env.example .env
+      - run: pnpm api:generate && git diff --exit-code -- docs/generated/openapi.json packages/api-client/src/generated.ts
+      - run: pnpm db:migrate && pnpm db:seed
+      - run: pnpm typecheck && pnpm lint && pnpm test && pnpm test:integration && pnpm build
+      - run: pnpm exec playwright install --with-deps chromium && pnpm test:e2e && pnpm test:deploy
+      - uses: ./.github/actions/verify-container
+        with:
+          postgres-container: ${{ job.services.postgres.id }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-verification
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+  version:
+    needs: [resolve, verify]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      released: ${{ steps.version.outputs.released }}
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      sha: ${{ steps.version.outputs.sha }}
+      latest: ${{ steps.version.outputs.latest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.manual == 'true' && needs.resolve.outputs.ref || 'main' }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: version
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+          MANUAL: ${{ needs.resolve.outputs.manual }}
+          TAG: ${{ needs.resolve.outputs.ref }}
+        run: |
+          set -euo pipefail
+          if [ "$MANUAL" = true ]; then
+            echo 'released=true' >> "$GITHUB_OUTPUT"
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            echo 'latest=false' >> "$GITHUB_OUTPUT"
+          else
+            test "$(git rev-parse HEAD)" = "$GITHUB_SHA" || { echo 'main moved; refusing to release unverified code'; exit 1; }
+            node scripts/release.mjs
+            echo 'latest=true' >> "$GITHUB_OUTPUT"
+          fi
+  frontend:
+    needs: version
+    if: needs.version.outputs.released == 'true'
+    environment: production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build frontend
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          test -n "$VITE_API_BASE_URL" || { echo 'VITE_API_BASE_URL is required'; exit 1; }
+          pnpm --filter @zhian/web build
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
+          RELEASE_TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          test -n "$NETLIFY_AUTH_TOKEN" && test -n "$NETLIFY_SITE_ID"
+          pnpm exec netlify deploy --filter @zhian/web --prod --no-build --dir apps/web/dist --site "$NETLIFY_SITE_ID" --message "$RELEASE_TAG" --json 2>&1 | tee netlify-deploy.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: netlify-deployment
+          path: netlify-deploy.log
+          if-no-files-found: ignore
+  image:
+    needs: version
+    if: needs.version.outputs.released == 'true'
+    environment: production
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+      - id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "name=ghcr.io/${REPOSITORY,,}-api" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=raw,value=${{ needs.version.outputs.tag }}
+            type=raw,value=sha-${{ needs.version.outputs.sha }}
+            type=raw,value=latest,enable=${{ needs.version.outputs.latest }}
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ needs.version.outputs.tag }}
+            COMMIT=${{ needs.version.outputs.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+      - name: Verify published manifest
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+          TAG: ${{ needs.version.outputs.tag }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          docker buildx imagetools inspect "$IMAGE:$TAG" | tee image-manifest.log
+          grep -q linux/amd64 image-manifest.log
+          grep -q linux/arm64 image-manifest.log
+          echo "$IMAGE@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: image-manifest
+          path: image-manifest.log
+          if-no-files-found: ignore

@@ -1,0 +1,14 @@
+{
+  "name": "@zhian/api-client",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "axios": "^1.13.1",
+    "@zhian/contracts": "workspace:*"
+  }
+}

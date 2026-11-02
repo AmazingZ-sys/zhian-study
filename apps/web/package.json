@@ -1,0 +1,27 @@
+{
+  "name": "@zhian/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vue-tsc --noEmit && vite build",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@zhian/contracts": "workspace:*",
+    "@zhian/api-client": "workspace:*",
+    "@zhian/shared": "workspace:*",
+    "@zhian/utils": "workspace:*",
+    "vue": "^3.5.22",
+    "vue-router": "^4.6.3",
+    "pinia": "^3.0.3",
+    "element-plus": "^2.11.5",
+    "axios": "^1.13.1",
+    "echarts": "^6.0.0",
+    "lucide-vue-next": "^0.548.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.12",
+    "vue-tsc": "^3.1.1"
+  }
+}

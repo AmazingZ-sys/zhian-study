@@ -1,0 +1,48 @@
+{
+  "name": "zhian-study",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.26.2",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "build": "pnpm -r build",
+    "test": "vitest run",
+    "test:integration": "RUN_INTEGRATION=1 vitest run apps/api/test/integration.test.ts",
+    "test:e2e": "playwright test",
+    "test:deploy": "bash scripts/test-deploy.sh",
+    "test:container": "bash scripts/test-container.sh",
+    "db:generate": "pnpm --filter @zhian/api db:generate",
+    "api:generate": "pnpm --filter @zhian/api exec tsx scripts/generate-openapi.ts",
+    "db:migrate": "pnpm --filter @zhian/api db:migrate",
+    "db:seed": "pnpm --filter @zhian/api db:seed",
+    "admin:promote": "pnpm --filter @zhian/api admin:promote"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.56.1",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/release-notes-generator": "^14.0.3",
+    "@types/node": "^22.19.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/test-utils": "^2.4.6",
+    "eslint": "^9.39.0",
+    "eslint-plugin-vue": "^10.5.1",
+    "jsdom": "^26.1.0",
+    "netlify-cli": "^27.16.0",
+    "openapi-typescript": "^7.13.0",
+    "prettier": "^3.6.2",
+    "semantic-release": "^24.2.9",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2",
+    "vitest": "^3.2.4",
+    "vue-eslint-parser": "^10.2.0"
+  }
+}

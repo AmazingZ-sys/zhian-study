@@ -1,0 +1,33 @@
+{
+  "name": "@zhian/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=../../.env src/index.ts",
+    "build": "tsup src/index.ts src/db/migrate.ts src/db/seed.ts --format esm --out-dir dist --clean --no-splitting",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx --env-file=../../.env src/db/migrate.ts",
+    "db:seed": "tsx --env-file=../../.env src/db/seed.ts",
+    "admin:promote": "tsx --env-file=../../.env src/db/promote.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.6",
+    "@zhian/contracts": "workspace:*",
+    "@zhian/shared": "workspace:*",
+    "@zhian/utils": "workspace:*",
+    "drizzle-orm": "^0.44.7",
+    "hono": "^4.10.3",
+    "jose": "^6.1.0",
+    "pg": "^8.16.3",
+    "zod": "^4.1.12",
+    "xlsx": "npm:@e965/xlsx@^0.20.3",
+    "csv-parse": "^6.1.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.5",
+    "drizzle-kit": "^0.31.5",
+    "tsx": "^4.20.6",
+    "tsup": "^8.5.0"
+  }
+}
