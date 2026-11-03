@@ -3,7 +3,15 @@ import ts from 'typescript-eslint';
 import vue from 'eslint-plugin-vue';
 export default ts.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/drizzle/**', '**/generated.ts', 'playwright-report/**', 'test-results/**'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/.vercel/**',
+      '**/drizzle/**',
+      '**/generated.ts',
+      'playwright-report/**',
+      'test-results/**',
+    ],
   },
   js.configs.recommended,
   ...ts.configs.recommended,
@@ -28,9 +36,5 @@ export default ts.config(
   {
     files: ['scripts/**/*.mjs'],
     languageOptions: { globals: { process: 'readonly', console: 'readonly', URL: 'readonly' } },
-  },
-  {
-    files: ['netlify/functions/**/*.mjs'],
-    languageOptions: { globals: { Response: 'readonly' } },
   },
 );

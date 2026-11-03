@@ -128,38 +128,68 @@ jobs:
   frontend:
     needs: version
     if: needs.version.outputs.released == 'true'
-    environment: production
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.version.outputs.tag }}
+          ref: ${{ needs.version.outputs.sha }}
+      - name: Check Vercel configuration
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          test -f vercel.json || { echo '::error::This release predates the Vercel migration; choose a release containing vercel.json.'; exit 1; }
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID VITE_API_BASE_URL; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Configure $name in the repository or production environment."
+              exit 1
+            fi
+          done
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Build frontend
+      - name: Pull Vercel production settings
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: pnpm exec vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+      - name: Build Vercel production artifacts
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
-        run: |
-          test -n "$VITE_API_BASE_URL" || { echo 'VITE_API_BASE_URL is required'; exit 1; }
-          pnpm --filter @zhian/web build
-      - name: Deploy to Netlify
+        run: pnpm exec vercel build --prod --token "$VERCEL_TOKEN"
+      - name: Deploy to Vercel
+        id: deploy
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           RELEASE_TAG: ${{ needs.version.outputs.tag }}
+          RELEASE_COMMIT: ${{ needs.version.outputs.sha }}
         run: |
           set -euo pipefail
-          test -n "$NETLIFY_AUTH_TOKEN" && test -n "$NETLIFY_SITE_ID"
-          pnpm exec netlify deploy --filter @zhian/web --prod --no-build --dir apps/web/dist --site "$NETLIFY_SITE_ID" --message "$RELEASE_TAG" --json 2>&1 | tee netlify-deploy.log
+          pnpm exec vercel deploy --prebuilt --prod --yes --json --token "$VERCEL_TOKEN" --meta "releaseTag=$RELEASE_TAG" --meta "commitSha=$RELEASE_COMMIT" > vercel-response.json 2> >(tee vercel-deploy.log >&2)
+          jq -e '.status == "ok" and .deployment.readyState == "READY" and .deployment.target == "production"' vercel-response.json > /dev/null
+          url=$(jq -er '.deployment.url | select(type == "string" and startswith("https://"))' vercel-response.json)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          jq -n --arg url "$url" --arg tag "$RELEASE_TAG" --arg commit "$RELEASE_COMMIT" '{url:$url,tag:$tag,commit:$commit}' > vercel-deployment.json
+          printf 'Vercel production: [%s](%s)\n\nTag: `%s` · Commit: `%s`\n' "$url" "$url" "$RELEASE_TAG" "$RELEASE_COMMIT" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: netlify-deployment
-          path: netlify-deploy.log
+          name: vercel-${{ needs.version.outputs.tag }}
+          path: |
+            vercel-deployment.json
+            vercel-response.json
+            vercel-deploy.log
           if-no-files-found: ignore
   image:
     needs: version

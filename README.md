@@ -2,13 +2,13 @@
 
 个人长期备考与选岗工作台。Vue 3 Web + Hono API + PostgreSQL，pnpm Monorepo。学习记录、试卷、收藏、笔记和管理操作均由 API 持久化，不以固定数据冒充用户数据。
 
-当前为可本地运行、带自动发布和服务器部署配置的第一阶段实现。2026-11-02 已重新通过全部本地检查；前端已通过本地 CLI 部署到公开站点 [zhian-study.netlify.app](https://zhian-study.netlify.app)，匿名访问 `/login` 返回 200，安全头已核验。代码 `879069f` 已推送 main，[云端 CI](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287145) 全部通过；[Release 工作流](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287140) 的全部 jobs（含容器门禁、版本、前端和双架构镜像发布）均成功，[v1.0.0](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.0) 已正式发布，Netlify 已由 Actions 部署。
+当前为可本地运行、带自动发布和服务器部署配置的第一阶段实现。前端已参考 `financial-radar` 迁移至 Vercel，2026-11-03 已使用本项目专用 Token 完成 pull 与预构建生产发布，将本地工作树产物发布到 [zhian-study.vercel.app](https://zhian-study.vercel.app)，部署 `dpl_CN41V6f3Fivc7wgSci8gu8xeMosK` 为 `READY` / `production`；[本次唯一部署地址](https://zhian-study-rc0oxht69-amazings-projects-6f99eda0.vercel.app)。这是手动生产发布，未创建新 Release，本次迁移的 GitHub Actions 云端执行和同 Release SHA 发布尚未验收。完整配置和验证边界见 [部署总览](docs/DEPLOYMENT.md)；迁移前 Netlify/Actions/GHCR 发布证据保留于 [测试结果](docs/TESTING.md)。
 
-用户目前暂无服务器，本次仅部署前端并发布 API 镜像。前端构建暂用 `VITE_API_BASE_URL=/api/v1`；Netlify 的 `/api/*` 配置通用 Function fallback，所有 HTTP 方法均返回明确说明 API 尚未部署的 503 JSON，注册、登录和业务数据功能需后续接入真实 API。默认内容只有原创示例题、虚构岗位和使用指南，均明确标记演示；真实题库、招录数据和专业目录需合法接入。完整边界见 [交付报告](docs/DELIVERY_REPORT.md)。
+未接入真实 API 时，前端可使用 `VITE_API_BASE_URL=/api/v1`，Vercel `/api/*` 兜底对所有 HTTP 方法返回明确的 503 JSON。接入 `https://api.zhian.amazingzsys.site/api/v1` 后需重新构建，并验收 CORS、Cookie、注册登录和业务数据流程；前端发布不代表后端已上线。默认内容只有原创示例题、虚构岗位和使用指南，均明确标记演示；真实题库、招录数据和专业目录需合法接入。完整边界见 [交付报告](docs/DELIVERY_REPORT.md)。
 
 ## 本地启动
 
-建议 Node.js 22、pnpm 10.26.2、Docker Desktop / Docker Compose。Node.js 20.19.2 也已通过本地验证。
+建议 Node.js 22、pnpm 10.26.2、Docker Desktop / Docker Compose。根工程 `engines.node` 限定 `>=20.19 <23`，避免 Vercel 自动选择更高 Node 主版本；Node.js 20.19.2 也已通过本地验证。
 
 ```bash
 corepack enable
@@ -92,9 +92,9 @@ docs/                     产品、架构、部署及交付证据
 
 ## 发布与运行
 
-采用 Conventional Commits。main 验证后由 Semantic Release 创建版本，再并行发布 Netlify/GHCR。无版本变化不发布。手动 `workflow_dispatch` 接受已有正式 tag，可恢复失败部署，不重复创建 Release。
+采用 Conventional Commits。main 验证后由 Semantic Release 创建版本，再并行发布 Vercel/GHCR，使用同一 Release SHA。无版本变化不发布。手动 `workflow_dispatch` 接受已有正式 tag，可恢复失败部署，不重复创建 Release；Vercel 重部署必须选择包含迁移配置的版本，迁移前 `v1.0.0` 不支持此流程。
 
-已发布镜像：`ghcr.io/amazingz-sys/zhian-study-api:v1.0.0`（linux/amd64、linux/arm64），manifest 摘要及访问边界见 [CI/CD](docs/CICD.md)。服务器部署留待取得服务器后进行；届时需要 Docker/Compose、宿主机 Nginx、curl、bash、flock、systemd、GNU coreutils，不安装 Node/pnpm。在服务器部署目录执行：
+已发布镜像：`ghcr.io/amazingz-sys/zhian-study-api:v1.0.0`（linux/amd64、linux/arm64），manifest 摘要及访问边界见 [CI/CD](docs/CICD.md)。服务器首次部署与联调见 [服务器手册](docs/SERVER_DEPLOYMENT.md)，需要 Docker/Compose、宿主机 Nginx、curl、bash、flock、systemd、GNU coreutils，不安装 Node/pnpm。在服务器部署目录执行：
 
 ```bash
 sudo ./deploy.sh v1.0.0
@@ -105,7 +105,9 @@ sudo env CONFIRM_DB_COMPATIBLE=yes ./rollback.sh v1.0.0
 
 部署将 tag 解析为镜像摘要；回滚使用成功快照中的摘要、Compose 和环境配置。数据库不自动降级。首次配置、备份、HTTPS、权限和失败恢复见 [服务器手册](docs/SERVER_DEPLOYMENT.md)。
 
-GitHub 已配置 Secret `NETLIFY_AUTH_TOKEN`、Variables `NETLIFY_SITE_ID` 与 `VITE_API_BASE_URL`；production Environment 和 required CI checks 按仓库策略设置。首次前端上传已通过本地 Netlify CLI 成功，v1.0.0 已由 Actions 发布；Netlify 当前未关联 Git 自动构建，由 Actions CLI 发布。取得真实 HTTPS API 后，将 `VITE_API_BASE_URL` 从 `/api/v1` 换为完整 API 地址并重新构建，按实际前端域名配置 API CORS/Cookie。使用真实 HTTPS API 基址后，请求不再调用 Netlify fallback。推荐前后端同站子域，避免第三方 Cookie 被阻断。
+根工程锁定 Vercel CLI `65.10.0`，关闭 Git 自动部署。Vercel 项目已设置为仓库根目录、Node 22.x。经用户授权，已创建仅用于 `zhian-study` 项目的专用 Token，有效期至 2027-11-03，并将 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID` 配置为 GitHub Secrets；凭据本身不写入工程或文档。Actions 配置依次执行 `vercel pull`、`vercel build --prod`、`vercel deploy --prebuilt --prod --json`，校验部署 READY/production 后保存 URL/版本/SHA 收据；本次云端 Actions 尚未验收。`.vercel` 状态与环境文件不提交，详见 [CI/CD](docs/CICD.md)。
+
+正式域名 `zhian.amazingzsys.site` 仍由 Netlify 提供服务，DNS 切换由用户最后执行；API 的 HTTPS 当前不可达，因此继续使用公开构建变量 `VITE_API_BASE_URL=/api/v1`。生产 API、完整注册登录与业务写入尚未验收。切换时使用本项目 Domains 提示的目标，保持 API 精确 CORS、Secure 和 SameSite=Lax Cookie。
 
 ## 文档
 

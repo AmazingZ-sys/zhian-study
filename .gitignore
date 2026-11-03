@@ -14,5 +14,6 @@ deploy/logs/
 .DS_Store
 
 
-# Local Netlify folder
+# Local hosting state
 .netlify
+.vercel/
