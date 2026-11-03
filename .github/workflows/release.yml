@@ -177,8 +177,8 @@ jobs:
         run: |
           set -euo pipefail
           pnpm exec vercel deploy --prebuilt --prod --yes --json --token "$VERCEL_TOKEN" --meta "releaseTag=$RELEASE_TAG" --meta "commitSha=$RELEASE_COMMIT" > vercel-response.json 2> >(tee vercel-deploy.log >&2)
-          jq -e '.status == "ok" and .deployment.readyState == "READY" and .deployment.target == "production"' vercel-response.json > /dev/null
-          url=$(jq -er '.deployment.url | select(type == "string" and startswith("https://"))' vercel-response.json)
+          jq -e '(.deployment // .) | .readyState == "READY" and .target == "production"' vercel-response.json > /dev/null
+          url=$(jq -er '(.deployment // .).url | select(type == "string" and startswith("https://"))' vercel-response.json)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           jq -n --arg url "$url" --arg tag "$RELEASE_TAG" --arg commit "$RELEASE_COMMIT" '{url:$url,tag:$tag,commit:$commit}' > vercel-deployment.json
           printf 'Vercel production: [%s](%s)\n\nTag: `%s` · Commit: `%s`\n' "$url" "$url" "$RELEASE_TAG" "$RELEASE_COMMIT" >> "$GITHUB_STEP_SUMMARY"
