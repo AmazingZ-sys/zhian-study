@@ -1,8 +1,10 @@
 # 部署总览
 
-2026-11-03 已使用本项目专用 Token 完成 pull 与预构建生产发布，将本地工作树产物发布到 [zhian-study.vercel.app](https://zhian-study.vercel.app)，部署 `dpl_CN41V6f3Fivc7wgSci8gu8xeMosK` 为 `READY` / `production`；[本次唯一部署地址](https://zhian-study-rc0oxht69-amazings-projects-6f99eda0.vercel.app)。这是手动生产发布，未创建新 Release，本次迁移的 GitHub Actions 云端执行和同 Release SHA 发布尚未验收。
+2026-11-03 已完成 Vercel 迁移，正式 [v1.0.2](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.2) 已通过 GitHub Actions 发布到 [zhian-study.vercel.app](https://zhian-study.vercel.app)。[主分支 CI 41596176461](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41596176461) 全绿，[正式 Release 41596176309](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41596176309) 的 resolve、verify、version、frontend 和 image 全部成功。
 
-匿名 `/login` 与 `/questions/validation-route` 返回 200，JavaScript 返回正确 MIME 与 immutable 长缓存，原 CSP 等安全头保留；GET `/api/v1/users/me`、POST `/api/v1/auth/login` 均返回 503 JSON、`API_NOT_DEPLOYED` 和 `Cache-Control: no-store`。正式域名 `zhian.amazingzsys.site` 仍由 Netlify 提供服务，DNS 切换由用户最后执行；API 的 HTTPS 当前不可达，因此继续使用公开构建变量 `VITE_API_BASE_URL=/api/v1`。生产 API、完整注册登录与业务写入尚未验收。证据见 [测试结果](TESTING.md)。
+Actions artifact `vercel-v1.0.2` 的部署收据对应 tag `v1.0.2`、commit `5334dad1024fa5c110c8ace11f1a73833d7483e2` 和 [唯一部署地址](https://zhian-study-2l3cb86hk-amazings-projects-6f99eda0.vercel.app)；Git tag 指向同一 SHA，Vercel 实际状态为 `READY` / `production`，部署 ID 为 `dpl_29TEEy7VmXPX7y5zGUA9JRD7oSSk`。
+
+匿名 `/login` 与 `/questions/validation-route` 返回 200，JavaScript 返回正确 MIME 与 immutable 长缓存，原 CSP 等安全头保留；GET `/api/v1/users/me`、POST `/api/v1/auth/login` 均返回 503 JSON、`API_NOT_DEPLOYED` 和 `Cache-Control: no-store`。用户已自行完成正式域名 [zhian.amazingzsys.site](https://zhian.amazingzsys.site) 的 DNS 切换，Vercel 域名配置、证书和静态 HTTP 均已验收；前端尚未接入生产 API，继续使用公开构建变量 `VITE_API_BASE_URL=/api/v1`。生产 API、完整注册登录与业务写入尚未验收。证据见 [测试结果](TESTING.md)。
 
 ## 本地
 
@@ -10,15 +12,15 @@
 
 ## Vercel
 
-根 `vercel.json` 指定 Vite、`pnpm install --frozen-lockfile`、`pnpm --filter @zhian/web build` 和 `apps/web/dist`；Vercel 项目 Root Directory 设为仓库根目录，Node.js 设为 22.x。根工程 `engines.node` 为 `>=20.19 <23`，避免平台自动选择更高 Node 主版本。锁定 CLI `65.10.0`，`git.deploymentEnabled=false`；本次通过本地 CLI 发布，后续生产入口配置为 GitHub Actions。
+根 `vercel.json` 指定 Vite、`pnpm install --frozen-lockfile`、`pnpm --filter @zhian/web build` 和 `apps/web/dist`；Vercel 项目 Root Directory 设为仓库根目录，Node.js 设为 22.x。根工程 `engines.node` 为 `>=20.19 <23`，避免平台自动选择更高 Node 主版本。锁定 CLI `65.10.0`，`git.deploymentEnabled=false`，生产入口为 GitHub Actions，v1.0.2 全链发布已通过。
 
-Vercel 项目已设置为仓库根目录、Node 22.x。经用户授权，已创建仅用于 `zhian-study` 项目的专用 Token，有效期至 2027-11-03，并将 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID` 配置为 GitHub Secrets；凭据本身不写入工程或文档。公开 Variable `VITE_API_BASE_URL` 在构建时显式注入。Actions 工作流配置检出同一 Release SHA，依次执行 `vercel pull --yes --environment=production`、`vercel build --prod`、`vercel deploy --prebuilt --prod --json`，解析并校验 READY/production/HTTPS URL 后保存 URL、版本和 SHA 收据；详见 [CI/CD](CICD.md)。不要把数据库、JWT 或其他后端密钥放入前端构建环境。
+Vercel 项目已设置为仓库根目录、Node 22.x。经用户授权，已创建仅用于 `zhian-study` 项目的专用 Token，有效期至 2027-11-03，并将 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID` 配置为 GitHub Secrets；凭据本身不写入工程或文档。公开 Variable `VITE_API_BASE_URL` 在构建时显式注入。Actions 工作流配置检出同一 Release SHA，依次执行 `vercel pull --yes --environment=production`、`vercel build --prod`、`vercel deploy --prebuilt --prod --json`，兼容平铺和 `deployment` 封装 JSON，校验 READY/production/HTTPS URL 后保存 URL、版本和 SHA 收据；详见 [CI/CD](CICD.md)。不要把数据库、JWT 或其他后端密钥放入前端构建环境。
 
 `/api/*` 优先 rewrite 到 `api/api-unavailable.mjs`，为所有 HTTP 方法返回 `API_NOT_DEPLOYED` 的 503 JSON，并使用 `no-store`。其他页面保留 Vue Router history 的 SPA fallback、安全响应头和 HTML 重新验证；哈希 assets 使用 immutable 长缓存。
 
 没有生产 API 时使用 `VITE_API_BASE_URL=/api/v1`；真实 API 可用后改为 `https://api.zhian.amazingzsys.site/api/v1` 并重新构建，浏览器将直接访问该 API。完整注册、登录和数据流程需在正式域名上另行验收。
 
-正式前端域名 `zhian.amazingzsys.site` 已绑定本 Vercel 项目，静态发布验收已通过，但 DNS 仍指向 Netlify。2026-11-03 本项目 CLI 给出的实际记录为 `zhian` CNAME → `312f34b1e08dbff2.vercel-dns-017.com`，由用户最后更新 DNS 并验证 HTTPS；操作前以本项目 Settings → Domains 的当前提示为准，不复制参考项目目标。API 子域名继续指向服务器。步骤见 [服务器与联调手册](SERVER_DEPLOYMENT.md)。
+正式前端域名 [zhian.amazingzsys.site](https://zhian.amazingzsys.site) 已绑定本 Vercel 项目，用户已自行完成 DNS 切换。2026-11-03 权威服务器 `heron.dnspod.net` 返回 `zhian` CNAME → `312f34b1e08dbff2.vercel-dns-017.com`；Vercel CLI 确认 `configured_correctly` 且项目 `verified=true`。正式域名 HTTPS 证书有效，入口和深层路由 200、JS MIME/immutable 缓存、GET/POST API 503 JSON 以及安全头均已通过 HTTP 验收，响应由 Vercel 提供。API 子域名不在本次前端 DNS 迁移范围；服务器和后续联调见 [服务器手册](SERVER_DEPLOYMENT.md)。
 
 ## 迁移前的历史发布（2026-11-02）
 

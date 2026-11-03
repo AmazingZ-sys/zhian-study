@@ -4,7 +4,9 @@
 
 迁移前历史（2026-11-02）：类型、Lint、单元 9 项、数据库集成 13 项、E2E 2 条、前后端构建、真实容器冒烟及部署模拟 10 场景已重新通过；CI 与 Release 增加实际容器验证门禁。前端已通过本地 CLI 部署至 https://zhian-study.netlify.app，并通过 Netlify API 设为公开；匿名 `/login` 返回 200，安全头已核验。代码 `879069f` 的[云端 CI](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287145) 全部通过，[Release 工作流](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287140) 的全部 jobs（含容器门禁、版本、前端和双架构镜像发布）均成功，[v1.0.0](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.0) 已正式发布，Netlify 已由 Actions 部署成功。首次云端 E2E 的笔记保存竞态已修复并重新通过。
 
-2026-11-03 已使用本项目专用 Token 完成 pull 与预构建生产发布，将本地工作树产物发布到 [zhian-study.vercel.app](https://zhian-study.vercel.app)，部署 `dpl_CN41V6f3Fivc7wgSci8gu8xeMosK` 为 `READY` / `production`；[本次唯一部署地址](https://zhian-study-rc0oxht69-amazings-projects-6f99eda0.vercel.app)。这是手动生产发布，未创建新 Release，本次迁移的 GitHub Actions 云端执行和同 Release SHA 发布尚未验收。
+2026-11-03 已完成 Vercel 迁移，正式 [v1.0.2](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.2) 已通过 GitHub Actions 发布到 [zhian-study.vercel.app](https://zhian-study.vercel.app)。[主分支 CI 41596176461](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41596176461) 全绿，[正式 Release 41596176309](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41596176309) 的 resolve、verify、version、frontend 和 image 全部成功。
+
+Actions artifact `vercel-v1.0.2` 的部署收据对应 tag `v1.0.2`、commit `5334dad1024fa5c110c8ace11f1a73833d7483e2` 和 [唯一部署地址](https://zhian-study-2l3cb86hk-amazings-projects-6f99eda0.vercel.app)；Git tag 指向同一 SHA，Vercel 实际状态为 `READY` / `production`，部署 ID 为 `dpl_29TEEy7VmXPX7y5zGUA9JRD7oSSk`。
 
 Vercel 项目已设置为仓库根目录、Node 22.x。经用户授权，已创建仅用于 `zhian-study` 项目的专用 Token，有效期至 2027-11-03，并将 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID` 配置为 GitHub Secrets；凭据本身不写入工程或文档。匿名 `/login` 与 `/questions/validation-route` 返回 200，JavaScript 返回正确 MIME 与 immutable 长缓存，原 CSP 等安全头保留；GET `/api/v1/users/me`、POST `/api/v1/auth/login` 均返回 503 JSON、`API_NOT_DEPLOYED` 和 `Cache-Control: no-store`。本地类型、Lint、9 项单元、全仓构建、13 项集成、2 条 Chrome E2E 及 10 个部署故障场景均通过；测试容器恢复原先停止状态；详见 [测试记录](TESTING.md)。
 
@@ -51,18 +53,18 @@ api/api-unavailable.mjs / docker-compose.yml / vercel.json / pnpm-lock.yaml
 
 ## 4. 未实现与明确限制
 
-| 项目               | 当前边界 / 后续工作                                                                                                                               |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 真实数据与专业目录 | 仅演示种子和样本目录；需合法数据源、完整年度目录及核验流程。适配器接口和手动导入已实现，无自动抓取服务                                            |
-| 编辑体验           | 管理端为严格校验的 JSON 编辑器，标签维护在 tags 数组；没有所见即所得编辑器和独立标签字典                                                          |
-| 富文本与媒体       | 支持段落、标题、引用、加粗、斜体、代码的安全 Markdown 子集和题目图片 URL；不执行任意 HTML，无文件存储/图片上传服务                                |
-| API 契约覆盖       | OpenAPI 可生成 TS paths/components，Axios 类型化适配和统计页已使用。部分考试/后台/导入响应仍为通用 envelope；不是全量响应校验或全端自动生成 SDK   |
-| 多端               | 仅架构和 Bearer 后端能力，未实现 App/小程序 UI、微信登录、推送、订阅消息                                                                          |
-| 通知               | 站内截止提醒；没有短信/邮件/系统推送                                                                                                              |
-| 性能与运营         | 单进程限流、同步小批量 Excel 解析、实时聚合与随机查询。大题库/大导入需要队列、隔离解析、Redis/预聚合和压测；暂无容量承诺                          |
-| 知识点             | 当前薄弱分析按科目，分类可多级；没有独立知识图谱或算法推荐                                                                                        |
-| 数据生命周期       | 未实现自助账户注销、隐私政策确认页、个人数据导出和保留周期任务；需运营者制定政策后补充                                                            |
-| 生产验收           | Vercel 手动生产发布 READY，入口/路由/资源/安全头及 GET/POST 503 JSON 已验收；本次 Actions、同 Release SHA、正式域名切换及生产 API/登录/恢复待验收 |
+| 项目               | 当前边界 / 后续工作                                                                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 真实数据与专业目录 | 仅演示种子和样本目录；需合法数据源、完整年度目录及核验流程。适配器接口和手动导入已实现，无自动抓取服务                                          |
+| 编辑体验           | 管理端为严格校验的 JSON 编辑器，标签维护在 tags 数组；没有所见即所得编辑器和独立标签字典                                                        |
+| 富文本与媒体       | 支持段落、标题、引用、加粗、斜体、代码的安全 Markdown 子集和题目图片 URL；不执行任意 HTML，无文件存储/图片上传服务                              |
+| API 契约覆盖       | OpenAPI 可生成 TS paths/components，Axios 类型化适配和统计页已使用。部分考试/后台/导入响应仍为通用 envelope；不是全量响应校验或全端自动生成 SDK |
+| 多端               | 仅架构和 Bearer 后端能力，未实现 App/小程序 UI、微信登录、推送、订阅消息                                                                        |
+| 通知               | 站内截止提醒；没有短信/邮件/系统推送                                                                                                            |
+| 性能与运营         | 单进程限流、同步小批量 Excel 解析、实时聚合与随机查询。大题库/大导入需要队列、隔离解析、Redis/预聚合和压测；暂无容量承诺                        |
+| 知识点             | 当前薄弱分析按科目，分类可多级；没有独立知识图谱或算法推荐                                                                                      |
+| 数据生命周期       | 未实现自助账户注销、隐私政策确认页、个人数据导出和保留周期任务；需运营者制定政策后补充                                                          |
+| 生产验收           | v1.0.2 正式 Actions、同 SHA、Vercel READY 与静态 HTTP 均已验收；正式域名 DNS/HTTPS/静态 HTTP 已验收，生产 API/登录/恢复待验收                   |
 
 前端设计使用 frontend-design 和 ui-ux-pro-max 的阅读优先、响应式与可访问性规则：纸白/深青、清晰数据标记、可见表单标签、键盘焦点、减少动效和图表表格替代。技能搜索脚本不可用，未声称使用了检索结果。
 
@@ -111,7 +113,7 @@ TypeScript、Lint、前后端构建通过；9 项单元/组件、13 项真实数
 
 根 `vercel.json`：Vite、冻结 pnpm 安装、`@zhian/web` 构建和 `apps/web/dist` 输出，项目 Root Directory 为仓库根目录，Node 22.x，根 `engines.node` 限定 `>=20.19 <23`；保留 SPA fallback、安全头和静态缓存。`/api/*` 优先 rewrite 至 `api/api-unavailable.mjs`，所有 HTTP 方法返回 503 JSON，避免 POST 被 SPA 返回 HTML。`VITE_API_BASE_URL` 构建时显式注入，真实 HTTPS API 请求直接访问后端。
 
-精确锁定 CLI 65.10.0，`git.deploymentEnabled=false`。GitHub 配置 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID` Secrets，前端 job 检出与镜像相同的 Release SHA，pull 生产设置、build --prod，再 deploy --prebuilt --prod --json；校验 JSON 状态 READY/production/HTTPS URL 后保存部署 URL、版本和 SHA 收据。`.vercel` 环境文件及产物不提交或进入 Docker 上下文。本次手动发布已验收，当前 Actions 与同 Release SHA 发布仍待验收；详细步骤见 [CI/CD](CICD.md)。
+精确锁定 CLI 65.10.0，`git.deploymentEnabled=false`。GitHub 配置 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID` Secrets，前端 job 检出与镜像相同的 Release SHA，pull 生产设置、build --prod，再 deploy --prebuilt --prod --json；兼容平铺与 `deployment` 封装 JSON，校验 READY/production/HTTPS URL 后保存部署 URL、版本和 SHA 收据。`.vercel` 环境文件及产物不提交或进入 Docker 上下文。v1.0.2 正式 Actions 和同 Release SHA 发布均已验收；详细步骤见 [CI/CD](CICD.md)。
 
 迁移前历史：Netlify API 确认 Actions 的 v1.0.0 部署 `6ae8046280c64206131c6cbd` 为 `production` / `ready`；[历史永久地址](https://6ae8046280c64206131c6cbd--zhian-study.netlify.app) 的 `/login` 返回 200 且 CSP 正确，GET `/api/v1/users/me` 和 POST `/api/v1/auth/login` 均返回 503 JSON。这些证据不代表 Vercel 已发布。
 
@@ -141,12 +143,12 @@ TypeScript、Lint、前后端构建通过；9 项单元/组件、13 项真实数
 | GitHub 自带      | GITHUB_TOKEN（contents/package 最小权限，无全权限 PAT）                                                                             |
 | 服务器           | GHCR 只读凭据、数据库 TLS/备份、DNS、证书、Nginx、生产 env（root:600）                                                              |
 
-Vercel 项目已设置为仓库根目录、Node 22.x。经用户授权，已创建仅用于 `zhian-study` 项目的专用 Token，有效期至 2027-11-03，并将 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID` 配置为 GitHub Secrets；专用 Token 的 pull 与预构建生产部署已实际通过，本地 Token 中转已删除；凭据本身不写入工程或文档。本次手动生产部署已完成并验收静态 HTTP；凭据的实际 Actions 使用、required CI checks 与 production Environment 策略需继续验收。正式域名 `zhian.amazingzsys.site` 仍由 Netlify 提供服务，DNS 切换由用户最后执行；API 的 HTTPS 当前不可达，因此继续使用公开构建变量 `VITE_API_BASE_URL=/api/v1`。生产 API、完整注册登录与业务写入尚未验收。切换时由用户使用本项目 Domains 提示的目标。
+Vercel 项目已设置为仓库根目录、Node 22.x。经用户授权，已创建仅用于 `zhian-study` 项目的专用 Token，有效期至 2027-11-03，并将 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID` 配置为 GitHub Secrets；专用 Token 的 pull 与预构建生产部署已实际通过，本地 Token 中转已删除；凭据本身不写入工程或文档。v1.0.2 正式 Actions 已使用实际凭据完成生产部署，静态 HTTP 和同 Release SHA 验收通过；required CI checks 与 production Environment 策略仍需按仓库要求单独维护。用户已自行完成正式域名 [zhian.amazingzsys.site](https://zhian.amazingzsys.site) 的 DNS 切换，Vercel 域名配置、证书和静态 HTTP 均已验收；前端尚未接入生产 API，继续使用公开构建变量 `VITE_API_BASE_URL=/api/v1`。生产 API、完整注册登录与业务写入尚未验收。当前 CNAME 和正式域名验收见 [部署总览](DEPLOYMENT.md)。
 
 ## 18. 首次部署
 
 1. 确认真实内容授权/核验、专业目录与生产数据政策；完成本报告列明的生产强化。
-2. 实际 Vercel 项目、GitHub Secrets 与手动生产部署已完成；后续发布包含迁移改动的新版本，验证 Actions 和同 Release SHA 收据。由用户按项目 Domains 提示切换正式域名 DNS，迁移前 v1.0.0 与镜像的历史证据见 CI/CD。
+2. 实际 Vercel 项目、GitHub Secrets 与 v1.0.2 正式 Actions 生产部署已完成，同 Release SHA 收据和静态 HTTP 已验收。用户已自行完成正式域名 DNS 切换，HTTPS 和静态 HTTP 已验收；迁移前 v1.0.0 与镜像的历史证据见 CI/CD。
 3. 配置独立 PostgreSQL、加密异地备份与恢复演练；准备 Linux Docker/Compose、宿主机 Nginx、curl、bash、flock、systemd、GNU coreutils。
 4. 安装 deploy 到受限目录，配置 env（root:600）、GHCR 只读登录、域名和 TLS，核对 CORS/代理 IP。
 5. `sudo ./deploy.sh v1.0.0`，验证 HTTPS API、浏览器跨域会话、数据隔离和正常使用。

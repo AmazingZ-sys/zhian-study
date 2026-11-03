@@ -8,25 +8,31 @@
 
 本次将前端配置改为 Vercel：仓库根目录、Node 22、CLI 65.10.0、冻结安装、pull/build/prebuilt deploy，关闭 Git 自动部署。根 `engines.node` 限定 `>=20.19 <23`，避免 Vercel 自动选择更高 Node 主版本。`/api/*` 优先进入 `api/api-unavailable.mjs`，对所有 HTTP 方法返回 503 JSON；SPA、安全头、HTML 重新验证和 assets immutable 缓存保留。
 
-2026-11-03 已使用本项目专用 Token 完成 pull 与预构建生产发布，将本地工作树产物发布到 [zhian-study.vercel.app](https://zhian-study.vercel.app)，部署 `dpl_CN41V6f3Fivc7wgSci8gu8xeMosK` 为 `READY` / `production`；[本次唯一部署地址](https://zhian-study-rc0oxht69-amazings-projects-6f99eda0.vercel.app)。这是手动生产发布，未创建新 Release，本次迁移的 GitHub Actions 云端执行和同 Release SHA 发布尚未验收。
+2026-11-03 已完成 Vercel 迁移，正式 [v1.0.2](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.2) 已通过 GitHub Actions 发布到 [zhian-study.vercel.app](https://zhian-study.vercel.app)。[主分支 CI 41596176461](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41596176461) 全绿，[正式 Release 41596176309](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41596176309) 的 resolve、verify、version、frontend 和 image 全部成功。
+
+Actions artifact `vercel-v1.0.2` 的部署收据对应 tag `v1.0.2`、commit `5334dad1024fa5c110c8ace11f1a73833d7483e2` 和 [唯一部署地址](https://zhian-study-2l3cb86hk-amazings-projects-6f99eda0.vercel.app)；Git tag 指向同一 SHA，Vercel 实际状态为 `READY` / `production`，部署 ID 为 `dpl_29TEEy7VmXPX7y5zGUA9JRD7oSSk`。Vercel API 的实际 metadata 中 `releaseTag=v1.0.2`，`commitSha` 与 `githubCommitSha` 均为同一 `5334dad…`，`nodeVersion=22.x`、`prebuilt=true`；已与 Git tag 和 Actions artifact 交叉核对。
 
 Vercel 项目已设置为仓库根目录、Node 22.x。经用户授权，已创建仅用于 `zhian-study` 项目的专用 Token，有效期至 2027-11-03，并将 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID` 配置为 GitHub Secrets；凭据本身不写入工程或文档。
 
-| 本次验证                                   | 结果                                                                                            |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `pnpm typecheck`、`pnpm lint`、`pnpm test` | 全部通过，9 项单元/组件测试                                                                     |
-| `pnpm build`                               | 全仓构建通过                                                                                    |
-| `pnpm test:integration`                    | 13 项通过；测试容器恢复原先停止状态                                                             |
-| `PLAYWRIGHT_CHANNEL=chrome pnpm test:e2e`  | 2 条完整场景通过                                                                                |
-| `pnpm test:deploy`                         | 2026-11-03 再次通过 10 个隔离部署场景                                                           |
-| Vercel 生产预构建与上传                    | 本地工作树手动发布，实际状态 READY / production                                                 |
-| 匿名入口与深层路由                         | `/login`、`/questions/validation-route` 均为 200                                                |
-| JavaScript 与安全头                        | 正确 JavaScript MIME、immutable 缓存，CSP 等原安全头保留                                        |
-| API 未部署兜底                             | GET `/api/v1/users/me`、POST `/api/v1/auth/login` 均为 503 JSON、`API_NOT_DEPLOYED`、`no-store` |
+| 本次验证                                   | 结果                                                                                                                 |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `pnpm typecheck`、`pnpm lint`、`pnpm test` | 全部通过，9 项单元/组件测试                                                                                          |
+| `pnpm build`                               | 全仓构建通过                                                                                                         |
+| `pnpm test:integration`                    | 13 项通过；测试容器恢复原先停止状态                                                                                  |
+| `PLAYWRIGHT_CHANNEL=chrome pnpm test:e2e`  | 2 条完整场景通过                                                                                                     |
+| `pnpm test:deploy`                         | 2026-11-03 再次通过 10 个隔离部署场景                                                                                |
+| Vercel 生产预构建与上传                    | v1.0.2 正式 Actions 发布，实际状态 READY / production                                                                |
+| 匿名入口与深层路由                         | `/login`、`/questions/validation-route` 均为 200                                                                     |
+| JavaScript 与安全头                        | 正确 JavaScript MIME、immutable 缓存、无 Netlify 注入，CSP 等原安全头保留                                            |
+| API 未部署兜底                             | GET `/api/v1/users/me`、POST `/api/v1/auth/login` 均为 503 JSON、`API_NOT_DEPLOYED`、`no-store`、`Retry-After: 3600` |
 
-首次已登录 CLI 的部署响应保存在忽略提交的 `.artifacts/vercel-migration/deployment-url.txt`，随后本项目专用 Token 的 pull 和预构建部署实际通过，最新收据为 `.artifacts/vercel-migration/token-deploy-response.json`。HTTP 证据在 `.artifacts/vercel-migration/http-receipt.json`。Token 的本地中转已删除；这些是手动生产发布证据，不是新 Release 或 Actions 发布证据。
+正式发布证据保存在忽略提交的 `.artifacts/vercel-migration/ci-release/`（下载的 `vercel-v1.0.2` artifact）、`ci-release-receipt.json`、`production-cloud-receipt.json`、`production-deployment-detail.json` 和 `production-http-receipt.json`；最后一项明确记录 v1.0.2 及对应 SHA 的正式入口、深层路由、安全头、资源缓存和 GET/POST API 验收。
 
-正式域名 `zhian.amazingzsys.site` 已绑定本 Vercel 项目，但 DNS 仍由 Netlify 提供服务，DNS 切换由用户最后执行；API 的 HTTPS 当前不可达，因此继续使用公开构建变量 `VITE_API_BASE_URL=/api/v1`。生产 API、完整注册登录与业务写入尚未验收。当前迁移的 Actions 云端流程、同 Release SHA 关联、正式域名 DNS/HTTPS 与生产登录写入仍待验收。下方保留迁移前 Netlify 历史记录。
+迁移过程：[PR #1](https://github.com/AmazingZ-sys/zhian-study/pull/1) 已合并，迁移 commit 为 `6455fcd`。最初用已登录 CLI 和本项目专用 Token 完成手动 pull/预构建部署，响应保留在 `deployment-url.txt` 与 `token-deploy-response.json`。首次 v1.0.1 的实际 Vercel 上传已成功，但后续收据检查因 Actions CLI 返回平铺 JSON、本地 agent 返回 `deployment` 封装而失败；提交 `5334dad1024fa5c110c8ace11f1a73833d7483e2` 兼容两种格式，并以两份真实响应验证，随后的 v1.0.2 全链成功。Token 本地中转已删除，凭据未写入工程。
+
+用户已自行将正式域名 [zhian.amazingzsys.site](https://zhian.amazingzsys.site) 切换到 Vercel。权威服务器 `heron.dnspod.net` 返回 `zhian` CNAME → `312f34b1e08dbff2.vercel-dns-017.com`；Vercel CLI 返回 `status=ok`、`reason=configured_correctly`、项目 `verified=true`，证据为 `.artifacts/vercel-migration/domain-final-receipt.json`。正式域名证书有效、响应 `Server: Vercel`，`/login` 与深层路由返回相同 HTML 200、JS 200 且 MIME/immutable 缓存正确，GET/POST API 503 JSON、`no-store`、`Retry-After: 3600` 和原安全头均再次通过，证据为 `.artifacts/vercel-migration/production-domain-http-receipt.json`。
+
+Vercel 正式 Actions、同 Release SHA、DNS、HTTPS 和静态 HTTP 均已验收。前端尚未接入生产 API，继续使用公开 `VITE_API_BASE_URL=/api/v1` 兜底；生产注册登录和业务写入仍需后端可用后单独验收。下方保留迁移前 Netlify 历史记录。
 
 ## 迁移前已验证（截至 2026-11-02）
 
