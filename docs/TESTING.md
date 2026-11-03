@@ -1,10 +1,34 @@
 # 测试结果与复现
 
-初次验证日期：2026-10-30；最新本地复验：2026-11-02。macOS、Node 20.19.2、pnpm 10.26.2、Docker Desktop、PostgreSQL 16、Google Chrome。镜像为 Node 22 Alpine / linux/amd64。以下保留初次验证的细节与边界。
+初次验证日期：2026-10-30；最新本地复验：2026-11-03。macOS、Node 20.19.2、pnpm 10.26.2、Docker Desktop、PostgreSQL 16、Google Chrome。镜像为 Node 22 Alpine / linux/amd64。以下保留初次验证的细节与边界。
 
-2026-11-02 已重新通过类型、Lint、9 项单元/组件测试、13 项独立数据库集成测试、2 条 E2E、前后端构建、真实容器冒烟及 10 个部署模拟场景。CI 和 Release verify 阶段新增实际镜像构建及测试库容器冒烟门禁。前端已通过本地 CLI 部署至公开站点 https://zhian-study.netlify.app，匿名 `/login` 返回 200，安全头已核验。代码 `879069f` 的[云端 CI](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287145) 全部通过，[Release 工作流](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287140) 的全部 jobs（含容器门禁、版本、前端和双架构镜像发布）均成功，[v1.0.0](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.0) 正式发布且 Netlify Actions 部署成功。首次云端 E2E 暴露笔记保存完成前刷新页面的竞态，已等待保存响应后再刷新并重新通过。
+迁移前历史记录：2026-11-02 已重新通过类型、Lint、9 项单元/组件测试、13 项独立数据库集成测试、2 条 E2E、前后端构建、真实容器冒烟及 10 个部署模拟场景。CI 和 Release verify 阶段新增实际镜像构建及测试库容器冒烟门禁。前端已通过本地 CLI 部署至公开站点 https://zhian-study.netlify.app，匿名 `/login` 返回 200，安全头已核验。代码 `879069f` 的[云端 CI](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287145) 全部通过，[Release 工作流](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287140) 的全部 jobs（含容器门禁、版本、前端和双架构镜像发布）均成功，[v1.0.0](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.0) 正式发布且 Netlify Actions 部署成功。首次云端 E2E 暴露笔记保存完成前刷新页面的竞态，已等待保存响应后再刷新并重新通过。
 
-## 已验证
+## Vercel 迁移（2026-11-03）
+
+本次将前端配置改为 Vercel：仓库根目录、Node 22、CLI 65.10.0、冻结安装、pull/build/prebuilt deploy，关闭 Git 自动部署。根 `engines.node` 限定 `>=20.19 <23`，避免 Vercel 自动选择更高 Node 主版本。`/api/*` 优先进入 `api/api-unavailable.mjs`，对所有 HTTP 方法返回 503 JSON；SPA、安全头、HTML 重新验证和 assets immutable 缓存保留。
+
+2026-11-03 已使用本项目专用 Token 完成 pull 与预构建生产发布，将本地工作树产物发布到 [zhian-study.vercel.app](https://zhian-study.vercel.app)，部署 `dpl_CN41V6f3Fivc7wgSci8gu8xeMosK` 为 `READY` / `production`；[本次唯一部署地址](https://zhian-study-rc0oxht69-amazings-projects-6f99eda0.vercel.app)。这是手动生产发布，未创建新 Release，本次迁移的 GitHub Actions 云端执行和同 Release SHA 发布尚未验收。
+
+Vercel 项目已设置为仓库根目录、Node 22.x。经用户授权，已创建仅用于 `zhian-study` 项目的专用 Token，有效期至 2027-11-03，并将 `VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID` 配置为 GitHub Secrets；凭据本身不写入工程或文档。
+
+| 本次验证                                   | 结果                                                                                            |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `pnpm typecheck`、`pnpm lint`、`pnpm test` | 全部通过，9 项单元/组件测试                                                                     |
+| `pnpm build`                               | 全仓构建通过                                                                                    |
+| `pnpm test:integration`                    | 13 项通过；测试容器恢复原先停止状态                                                             |
+| `PLAYWRIGHT_CHANNEL=chrome pnpm test:e2e`  | 2 条完整场景通过                                                                                |
+| `pnpm test:deploy`                         | 2026-11-03 再次通过 10 个隔离部署场景                                                           |
+| Vercel 生产预构建与上传                    | 本地工作树手动发布，实际状态 READY / production                                                 |
+| 匿名入口与深层路由                         | `/login`、`/questions/validation-route` 均为 200                                                |
+| JavaScript 与安全头                        | 正确 JavaScript MIME、immutable 缓存，CSP 等原安全头保留                                        |
+| API 未部署兜底                             | GET `/api/v1/users/me`、POST `/api/v1/auth/login` 均为 503 JSON、`API_NOT_DEPLOYED`、`no-store` |
+
+首次已登录 CLI 的部署响应保存在忽略提交的 `.artifacts/vercel-migration/deployment-url.txt`，随后本项目专用 Token 的 pull 和预构建部署实际通过，最新收据为 `.artifacts/vercel-migration/token-deploy-response.json`。HTTP 证据在 `.artifacts/vercel-migration/http-receipt.json`。Token 的本地中转已删除；这些是手动生产发布证据，不是新 Release 或 Actions 发布证据。
+
+正式域名 `zhian.amazingzsys.site` 已绑定本 Vercel 项目，但 DNS 仍由 Netlify 提供服务，DNS 切换由用户最后执行；API 的 HTTPS 当前不可达，因此继续使用公开构建变量 `VITE_API_BASE_URL=/api/v1`。生产 API、完整注册登录与业务写入尚未验收。当前迁移的 Actions 云端流程、同 Release SHA 关联、正式域名 DNS/HTTPS 与生产登录写入仍待验收。下方保留迁移前 Netlify 历史记录。
+
+## 迁移前已验证（截至 2026-11-02）
 
 | 验证         | 命令/证据                                                        | 结果                                                                   |
 | ------------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -22,7 +46,7 @@
 
 测试源：`packages/shared/src/rules.test.ts`、`apps/web/src/components/*.test.ts`、`apps/api/test/integration.test.ts`、`e2e/platform.spec.ts`、`scripts/test-deploy*.sh`、`scripts/test-container.sh`。
 
-## 云端发布证据（2026-11-02）
+## 迁移前云端发布证据（2026-11-02）
 
 - 提交 `879069f`：[CI 41383287145](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287145) 全绿；[Release 41383287140](https://github.com/AmazingZ-sys/zhian-study/actions/runs/41383287140) 的全部 jobs（含真实容器门禁、版本、前端和双架构镜像发布）成功。
 - [v1.0.0 正式 Release](https://github.com/AmazingZ-sys/zhian-study/releases/tag/v1.0.0) 已创建；首次云端 E2E 的笔记保存竞态修复后重新通过。
@@ -62,6 +86,6 @@
 
 required checks 阻断合并、GHCR 匿名拉取、arm64 实机运行、远端服务器拉取、宿主机 Nginx reload、线上恢复、异地备份恢复演练。GHCR 发布结果和 manifest digest 见 [CI/CD](CICD.md)。
 
-用户目前暂无服务器，本次仅部署前端并发布镜像；API 和生产数据库尚未部署。前端暂用 `VITE_API_BASE_URL=/api/v1`，Netlify `/api/*` 配置通用 Function，为所有 HTTP 方法返回明确的 API 未部署 503 JSON；这修复了静态 404 rewrite 对 POST 返回 HTML 的问题，真实 HTTPS API 基址请求不调用该 fallback。当前 E2E 证据来自本地与云端 CI 的 Web/API/测试库，不能据此宣称线上注册、登录和业务流程已可用；真实 API 上线后需替换构建地址并重新验收。
+截至迁移前交付，生产 API/数据库未验收；当时 Netlify `/api/*` 的通用 Function 解决了静态 404 rewrite 对 POST 返回 HTML 的问题。本次 Vercel 保留同样的 503 JSON 行为。前端使用 `/api/v1` 时会命中兜底，接入真实 HTTPS API 后需重新构建。已有 E2E 证据来自本地与云端 CI 的 Web/API/测试库，不能据此宣称生产注册、登录和业务流程已可用；服务器和完整前后端联调需另行验收。
 
 没有负载/压力/长稳测试、独立安全审计、完整 WCAG 审计。不能根据当前功能测试宣称可承受大规模并发。

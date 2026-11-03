@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@10.26.2",
   "engines": {
-    "node": ">=20.19"
+    "node": ">=20.19 <23"
   },
   "scripts": {
     "dev": "pnpm --parallel --filter './apps/*' dev",
@@ -36,13 +36,13 @@
     "eslint": "^9.39.0",
     "eslint-plugin-vue": "^10.5.1",
     "jsdom": "^26.1.0",
-    "netlify-cli": "^27.16.0",
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.6.2",
     "semantic-release": "^24.2.9",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.2",
     "vitest": "^3.2.4",
-    "vue-eslint-parser": "^10.2.0"
+    "vue-eslint-parser": "^10.2.0",
+    "vercel": "65.10.0"
   }
 }
