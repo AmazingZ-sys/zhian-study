@@ -4,6 +4,8 @@ import type { Overview, DailyStat, SubjectStat, Exam } from '@zhian/contracts';
 import { api, typedApi, errorText } from '../api';
 import AsyncState from '../components/AsyncState.vue';
 import StudyChart from '../components/StudyChart.vue';
+import AiResult from '../features/ai/AiResult.vue';
+import { generateStudyAdvice } from '../features/ai/api';
 const loading = ref(true),
   error = ref(''),
   overview = ref<Overview>(),
@@ -89,6 +91,13 @@ onMounted(load);
               {{ s.total < 10 ? '样本较少，继续积累' : s.accuracy < 60 ? '建议重点复盘' : '保持练习' }}
             </p>
           </div>
+          <AiResult
+            title="AI 学习建议"
+            action="生成学习建议"
+            disclosure="生成时会向 AI 网关发送近 30 天按日期和主要科目汇总的作答数和答对数。"
+            :unavailable-reason="daily.length ? undefined : '近 30 天暂无作答记录，完成练习后可生成建议。'"
+            :generate="generateStudyAdvice"
+          />
         </section>
         <section class="panel">
           <h2 class="mb">每日错题变化</h2>

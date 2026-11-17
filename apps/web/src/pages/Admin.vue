@@ -6,6 +6,8 @@ import { Plus, Download, Upload } from 'lucide-vue-next';
 import { api, errorText } from '../api';
 import AsyncState from '../components/AsyncState.vue';
 import DataBadge from '../components/DataBadge.vue';
+import AiQuestionDrafts from '../features/ai/AiQuestionDrafts.vue';
+import AiSettingsPanel from '../features/ai/AiSettingsPanel.vue';
 const route = useRoute(),
   section = computed(() => String(route.params.section ?? 'overview')),
   loading = ref(true),
@@ -21,6 +23,7 @@ const route = useRoute(),
   kind = ref('questions'),
   format = ref('json'),
   file = ref<File>(),
+  fileInput = ref<HTMLInputElement>(),
   importText = ref('[]'),
   result = ref<{
     id: string;
@@ -38,6 +41,7 @@ const sections = [
   ['jobs', '岗位'],
   ['announcements', '公告'],
   ['imports', '导入导出'],
+  ['ai', 'AI 设置'],
   ['sources', '数据来源'],
   ['audit-logs', '审计日志'],
 ];
@@ -45,6 +49,7 @@ const editable = computed(() =>
   ['questions', 'categories', 'jobs', 'announcements', 'sources'].includes(section.value),
 );
 async function load() {
+  if (section.value === 'ai') return;
   loading.value = true;
   error.value = '';
   try {
@@ -64,6 +69,10 @@ async function load() {
     loading.value = false;
   }
 }
+function clearFile() {
+  file.value = undefined;
+  if (fileInput.value) fileInput.value.value = '';
+}
 function template() {
   const now = new Date().toISOString();
   const source = {
@@ -77,6 +86,7 @@ function template() {
       subject: '数量关系',
       categoryId: categories.value[0]?.id ?? '',
       type: 'single',
+      material: '',
       options: [
         { key: 'A', text: '选项一' },
         { key: 'B', text: '选项二' },
@@ -132,7 +142,7 @@ function template() {
 function edit(row?: Record<string, unknown>) {
   editId.value = row ? String(row.id) : '';
   const data = row ? { ...row } : template();
-  for (const k of ['id', 'createdAt', 'updatedAt', 'version', 'favorite', 'count'])
+  for (const k of ['id', 'createdAt', 'updatedAt', 'version', 'favorite', 'count', 'externalKey'])
     if (k !== 'version' || section.value !== 'sources') delete (data as Record<string, unknown>)[k];
   text.value = JSON.stringify(data, null, 2);
   editor.value = true;
@@ -237,7 +247,8 @@ onMounted(load);
       >{{ label }}</RouterLink
     >
   </nav>
-  <AsyncState :loading="loading" :error="error" @retry="load">
+  <AiSettingsPanel v-if="section === 'ai'" />
+  <AsyncState v-else :loading="loading" :error="error" @retry="load">
     <div v-if="section === 'overview'" class="stats-grid">
       <div
         v-for="[key, label] in [
@@ -269,19 +280,27 @@ onMounted(load);
             </select></label
           ><label
             >上传 JSON / CSV / Excel<input
+              ref="fileInput"
               type="file"
               accept=".json,.csv,.xlsx"
               @change="file = ($event.target as HTMLInputElement).files?.[0]" /></label
           ><button
             class="button secondary"
             @click="
-              file = undefined;
+              clearFile();
               importText = JSON.stringify([template()], null, 2);
             "
           >
             填入 JSON 模板
           </button>
+          <button v-if="file" class="button secondary" @click="clearFile">取消文件选择</button>
         </div>
+        <AiQuestionDrafts
+          v-if="kind === 'questions'"
+          v-model:import-text="importText"
+          :categories="categories"
+          :file-selected="!!file"
+        />
         <label
           >或直接粘贴 JSON 数组<textarea
             v-model="importText"

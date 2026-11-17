@@ -12,14 +12,17 @@ import { sql } from 'drizzle-orm';
 import { config, origins, trustedProxyIPs } from './config.js';
 import { db } from './db/index.js';
 import { optionalAuth, authRoutes, userRoutes } from './auth.js';
-import { questionRoutes } from './questions.js';
+import { questionRoutes, questionPaperRoutes } from './questions.js';
 import { examRoutes } from './exams.js';
 import { statsRoutes, planRoutes } from './statistics.js';
 import { contentRoutes } from './content.js';
 import { adminRoutes } from './admin.js';
+import { aiRoutes } from './ai-routes.js';
+import { bankAssetHeaders, bankAssetRoutes } from './bank-assets.js';
 import { openapi } from './openapi.js';
 import { fail, type Env } from './lib.js';
 export const app = new Hono<Env>();
+app.use('/api/v1/bank-assets/*', bankAssetHeaders);
 app.use('*', secureHeaders());
 app.use('*', async (c, next) => {
   const started = Date.now();
@@ -106,11 +109,14 @@ app.get('/api/v1/openapi.json', (c) => c.json(openapi));
 app.route('/api/v1/auth', authRoutes);
 app.route('/api/v1/users', userRoutes);
 app.route('/api/v1', questionRoutes);
+app.route('/api/v1/question-papers', questionPaperRoutes);
 app.route('/api/v1/exams', examRoutes);
 app.route('/api/v1/statistics', statsRoutes);
 app.route('/api/v1/study-plans', planRoutes);
 app.route('/api/v1', contentRoutes);
 app.route('/api/v1/admin', adminRoutes);
+app.route('/api/v1/ai', aiRoutes);
+app.route('/api/v1/bank-assets', bankAssetRoutes);
 app.notFound((c) =>
   c.json({ error: { code: 'NOT_FOUND', message: '接口不存在' }, requestId: c.get('requestId') }, 404),
 );

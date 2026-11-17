@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { safeImageUrl } from '../features/practice/content';
 const props = defineProps<{ text: string }>();
 // Deliberately small Markdown subset. All user text remains Vue text nodes.
 const blocks = computed(() =>
@@ -12,8 +13,13 @@ const blocks = computed(() =>
       return { tag: 'p', text };
     }),
 );
-function inline(text: string) {
-  return text.split(/(\*\*[^*\n]+\*\*|`[^`\n]+`|\*[^*\n]+\*)/g).map((part) => {
+function inline(text: string): { tag: string; text: string; src?: string }[] {
+  return text.split(/(!\[[^\]\n]*\]\([^\s]+\)|\*\*[^*\n]+\*\*|`[^`\n]+`|\*[^*\n]+\*)/g).map((part) => {
+    const match = /^!\[([^\]\n]*)\]\(([^\s]+)\)$/.exec(part);
+    if (match) {
+      const src = safeImageUrl(match[2]!);
+      if (src) return { tag: 'img', text: match[1] || '题目配图', src };
+    }
     if (part.startsWith('**') && part.endsWith('**')) return { tag: 'strong', text: part.slice(2, -2) };
     if (part.startsWith('`') && part.endsWith('`')) return { tag: 'code', text: part.slice(1, -1) };
     if (part.startsWith('*') && part.endsWith('*')) return { tag: 'em', text: part.slice(1, -1) };
@@ -24,7 +30,16 @@ function inline(text: string) {
 <template>
   <div class="rich-text">
     <component :is="block.tag" v-for="(block, index) in blocks" :key="index">
-      <component :is="part.tag" v-for="(part, i) in inline(block.text)" :key="i">{{ part.text }}</component>
+      <template v-for="(part, i) in inline(block.text)" :key="i">
+        <img
+          v-if="part.tag === 'img'"
+          :src="part.src"
+          :alt="part.text"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+        />
+        <component :is="part.tag" v-else>{{ part.text }}</component>
+      </template>
     </component>
   </div>
 </template>
@@ -46,5 +61,11 @@ code {
   padding: 2px 5px;
   border-radius: 3px;
   font-family: monospace;
+}
+img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
 }
 </style>

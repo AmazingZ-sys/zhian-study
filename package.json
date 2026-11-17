@@ -22,6 +22,9 @@
     "api:generate": "pnpm --filter @zhian/api exec tsx scripts/generate-openapi.ts",
     "db:migrate": "pnpm --filter @zhian/api db:migrate",
     "db:seed": "pnpm --filter @zhian/api db:seed",
+    "bank:export": "python3 apps/api/scripts/export-question-bank.py",
+    "bank:import": "pnpm --filter @zhian/api bank:import",
+    "bank:test": "python3 apps/api/scripts/test-question-bank-export.py",
     "admin:promote": "pnpm --filter @zhian/api admin:promote"
   },
   "devDependencies": {

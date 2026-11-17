@@ -182,10 +182,16 @@ onBeforeUnmount(() => {
           <div class="panel-heading">
             <span class="badge">{{ question.subject }} · 第 {{ index + 1 }} / {{ exam.total }} 题</span
             ><span class="muted"
-              >{{ { single: '单选', multiple: '多选', boolean: '判断' }[question.type] }} ·
-              {{ exam.points }} 分</span
+              >{{
+                { single: '单选', multiple: '多选', boolean: '判断', subjective: '阅读' }[question.type]
+              }}
+              · {{ exam.points }} 分</span
             >
           </div>
+          <details v-if="question.material" class="exam-material mb" open>
+            <summary>阅读材料</summary>
+            <RichText class="mt" :text="question.material" />
+          </details>
           <RichText class="question-stem" :text="question.title" />
           <img v-if="question.imageUrl" :src="question.imageUrl" alt="题目配图" class="question-image" />
           <div role="group" aria-label="考试答案">
@@ -202,7 +208,7 @@ onBeforeUnmount(() => {
               @click="choose(o.key)"
             >
               <span class="option-key">{{ o.key }}</span
-              >{{ o.text }}
+              ><RichText :text="o.text" />
             </button>
           </div>
           <p v-if="saveError" class="form-error" role="alert">{{ saveError }}</p>
@@ -221,8 +227,8 @@ onBeforeUnmount(() => {
           <div class="actions mt">
             <button class="button secondary" :disabled="index === 0 || busy" @click="index--">
               <ArrowLeft :size="15" />上一题
-</button
-            ><button class="button" :disabled="index === exam.total - 1 || busy" @click="index++">
+            </button>
+            <button class="button" :disabled="index === exam.total - 1 || busy" @click="index++">
               下一题<ArrowRight :size="15" />
             </button>
           </div>
@@ -265,3 +271,20 @@ onBeforeUnmount(() => {
     </template>
   </AsyncState>
 </template>
+<style scoped>
+.exam-material {
+  max-height: 520px;
+  overflow: auto;
+  background: #f4f5f0;
+  padding: 18px;
+  border-radius: 8px;
+}
+.exam-material summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.option :deep(.rich-text) {
+  min-width: 0;
+  text-align: left;
+}
+</style>

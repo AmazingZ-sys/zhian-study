@@ -51,12 +51,10 @@ export const questionSchema = z
     examType: z.string().max(40).default('行测'),
     subject: z.string().min(1).max(80),
     categoryId: idSchema,
-    type: z.enum(['single', 'multiple', 'boolean']).default('single'),
-    options: z.array(optionSchema).min(2).max(8),
-    correctAnswer: z
-      .array(z.string().regex(/^[A-H]$/))
-      .min(1)
-      .max(8),
+    type: z.enum(['single', 'multiple', 'boolean', 'subjective']).default('single'),
+    material: z.string().max(500000).default(''),
+    options: z.array(optionSchema).max(8),
+    correctAnswer: z.array(z.string().regex(/^[A-H]$/)).max(8),
     explanation: z.string().min(1).max(20000),
     difficulty: z.number().int().min(1).max(5).default(2),
     tags: z.array(z.string().max(40)).max(20).default([]),
@@ -68,8 +66,15 @@ export const questionSchema = z
     imageUrl: safeUrl.nullable().default(null),
   })
   .superRefine((v, ctx) => {
+    if (v.type === 'subjective') {
+      if (v.options.length || v.correctAnswer.length)
+        ctx.addIssue({ code: 'custom', message: '主观阅读题不设置计分选项或答案' });
+      return;
+    }
     const keys = new Set(v.options.map((o) => o.key));
     if (
+      v.options.length < 2 ||
+      v.correctAnswer.length < 1 ||
       keys.size !== v.options.length ||
       new Set(v.correctAnswer).size !== v.correctAnswer.length ||
       v.correctAnswer.some((k) => !keys.has(k)) ||
@@ -87,6 +92,29 @@ export const answerSchema = z.object({
   requestId: idSchema,
   sessionId: idSchema.optional(),
 });
+export const aiQuestionExplanationInputSchema = z.strictObject({ questionId: idSchema, answerId: idSchema });
+export const aiQuestionDraftsInputSchema = z.strictObject({
+  categoryId: idSchema,
+  sourceLabel: z.string().trim().min(1).max(200),
+  text: z.string().trim().min(1).max(12000),
+});
+export const aiTokenLimitFieldSchema = z.enum(['max_completion_tokens', 'max_tokens']);
+export const aiSettingsInputSchema = z.strictObject({
+  enabled: z.boolean(),
+  baseUrl: z.string().trim().min(1).max(2048),
+  model: z.string().trim().min(1).max(200),
+  tokenLimitField: aiTokenLimitFieldSchema.default('max_completion_tokens'),
+  apiKey: z.string().trim().min(1).max(2048).nullable().optional(),
+});
+export const aiSettingsSchema = z.object({
+  enabled: z.boolean(),
+  baseUrl: z.string(),
+  model: z.string(),
+  tokenLimitField: aiTokenLimitFieldSchema,
+  hasApiKey: z.boolean(),
+  source: z.enum(['database', 'environment', 'none']),
+});
+export type AiSettings = z.infer<typeof aiSettingsSchema>;
 export const examCreateSchema = z.object({
   title: z.string().min(1).max(100).default('自定义模拟考试'),
   count: z.number().int().min(1).max(100).default(10),
@@ -190,6 +218,22 @@ export type Question = Omit<QuestionInput, 'correctAnswer' | 'explanation'> & {
   mastered?: boolean;
   note?: string;
 };
+export type SourcePaperMaterial = { title: string; text: string; pdf: string; idx: number | null };
+export type SourcePaper = {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  sourceId: string;
+  title: string;
+  subject: string;
+  category: string;
+  year: number | null;
+  questionCount: number;
+  materials: SourcePaperMaterial[];
+};
+export type SourcePaperDetail = SourcePaper & {
+  questions: (Pick<Question, 'id' | 'title' | 'type' | 'subject'> & { position: number })[];
+};
 export type AnswerResult = {
   id: string;
   correct: boolean;
@@ -215,6 +259,7 @@ export type Announcement = AnnouncementInput & {
 export type PageMeta = { total: number; page: number; pageSize: number };
 export type Envelope<T> = { data: T; meta?: PageMeta };
 export type Category = z.infer<typeof categorySchema> & { id: string; count: number };
+export type CategoryProgress = Category & { attempted: number; attempts: number; correctAttempts: number };
 export type MatchResult = {
   status: '符合' | '不符合' | '需要人工确认';
   reasons: { field: string; status: '符合' | '不符合' | '需要人工确认'; message: string }[];

@@ -6,6 +6,7 @@ PostgreSQL + Drizzle；模型为 apps/api/src/db/schema.ts，迁移由 drizzle-k
 
 users → user_profiles (1:1)、auth_sessions、practice_sessions、practice_answers、user_question_states、exam_attempts、收藏。
 question_categories 自引用父分类；questions → question_options (1:N)，题目来源指向 content_sources。
+questions.external_key 为可空唯一来源键，material 保存题目材料，主观题 type=subjective 不参与自动计分。source_papers 保存原试卷、材料及原始元数据；source_paper_questions 以 paper_id/position 唯一关联学习题目，保留每次原卷出现的原始行。此关系与用户模拟考试快照独立。
 practice_answers 引用用户、题目、练习会话，唯一 user/requestId；user_question_states 唯一 user/question，保存收藏、错题次数、笔记、掌握。
 exam_papers → exam_paper_questions（题目与答案快照）；exam_attempts 引用 paper/user；exam_answers 唯一 attempt/question。
 jobs / announcements → content_sources；job_favorites / announcement_favorites 唯一 user/content。

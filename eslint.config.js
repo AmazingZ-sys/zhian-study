@@ -11,6 +11,8 @@ export default ts.config(
       '**/generated.ts',
       'playwright-report/**',
       'test-results/**',
+      '.artifacts/**',
+      'data/question-bank/**',
     ],
   },
   js.configs.recommended,

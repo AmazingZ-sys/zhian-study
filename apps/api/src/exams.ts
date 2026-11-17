@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { and, eq, lte, sql, asc, desc } from 'drizzle-orm';
+import { and, eq, ne, lte, sql, asc, desc } from 'drizzle-orm';
 import { examCreateSchema, examAnswerSchema } from '@zhian/contracts';
 import { answersEqual } from '@zhian/shared';
 import { db, type Tx } from './db/index.js';
@@ -149,6 +149,7 @@ examRoutes.post('/', async (c) => {
       .where(
         and(
           eq(questions.enabled, true),
+          ne(questions.type, 'subjective'),
           input.categoryId ? eq(questions.categoryId, input.categoryId) : undefined,
         ),
       )
@@ -159,13 +160,15 @@ examRoutes.post('/', async (c) => {
       .insert(papers)
       .values({ title: input.title, minutes: input.minutes, points: input.points })
       .returning();
-    for (let i = 0; i < qs.length; i++)
+    for (let i = 0; i < qs.length; i++) {
+      const { externalKey: _externalKey, ...snapshot } = (await loadQuestion(qs[i]!.id, tx))!;
       await tx.insert(paperQuestions).values({
         paperId: paper!.id,
         questionId: qs[i]!.id,
         position: i,
-        snapshot: (await loadQuestion(qs[i]!.id, tx))!,
+        snapshot,
       });
+    }
     const now = await dbNow(tx);
     const [attempt] = await tx
       .insert(attempts)

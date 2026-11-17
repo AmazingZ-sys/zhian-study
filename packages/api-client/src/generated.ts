@@ -175,6 +175,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/question-categories/progress': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 分类及个人刷题进度 */
+    get: operations['get_question_categories_progress'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/questions': {
     parameters: {
       query?: never;
@@ -201,6 +218,57 @@ export interface paths {
     };
     /** 题目（不含答案） */
     get: operations['get_questions__id_'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/questions/{id}/solution': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 登录后查看主观阅读题参考解析（不计分） */
+    get: operations['get_questions__id__solution'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/question-papers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 原试卷目录（不含原始数据） */
+    get: operations['get_question_papers'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/question-papers/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 原试卷材料与题目顺序（不含答案） */
+    get: operations['get_question_papers__id_'];
     put?: never;
     post?: never;
     delete?: never;
@@ -309,6 +377,109 @@ export interface paths {
     head?: never;
     /** 标记掌握 */
     patch: operations['patch_wrong_questions__id__mastered'];
+    trace?: never;
+  };
+  '/ai/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** AI 服务状态 */
+    get: operations['get_ai_status'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/ai/question-explanation': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 生成答题后的 AI 解析 */
+    post: operations['post_ai_question_explanation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/ai/study-advice': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 生成近 30 天学习建议 */
+    post: operations['post_ai_study_advice'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/ai/question-drafts': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 管理员生成题目导入草稿 */
+    post: operations['post_ai_question_drafts'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/ai/settings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 管理员读取 AI 网关配置 */
+    get: operations['get_ai_settings'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** 管理员保存 AI 网关配置 */
+    patch: operations['patch_ai_settings'];
+    trace?: never;
+  };
+  '/ai/settings/test': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 管理员测试 AI 网关连接 */
+    post: operations['post_ai_settings_test'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   '/questions/{id}/favorite': {
@@ -1098,7 +1269,9 @@ export interface components {
        * @default single
        * @enum {string}
        */
-      type: 'single' | 'multiple' | 'boolean';
+      type: 'single' | 'multiple' | 'boolean' | 'subjective';
+      /** @default  */
+      material: string;
       options: {
         key: string;
         text: string;
@@ -1349,7 +1522,9 @@ export interface components {
        * @default single
        * @enum {string}
        */
-      type: 'single' | 'multiple' | 'boolean';
+      type: 'single' | 'multiple' | 'boolean' | 'subjective';
+      /** @default  */
+      material: string;
       options: {
         key: string;
         text: string;
@@ -1393,6 +1568,141 @@ export interface components {
       seconds: number;
       /** Format: date-time */
       createdAt: string;
+    };
+    QuestionSolution: {
+      explanation: string;
+    };
+    SourcePaper: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** Format: uuid */
+      sourceId: string;
+      title: string;
+      subject: string;
+      category: string;
+      year: number | null;
+      questionCount: number;
+      materials: {
+        title: string;
+        text: string;
+        pdf: string;
+        idx: number | null;
+      }[];
+    };
+    SourcePaperDetail: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** Format: uuid */
+      sourceId: string;
+      title: string;
+      subject: string;
+      category: string;
+      year: number | null;
+      questionCount: number;
+      materials: {
+        title: string;
+        text: string;
+        pdf: string;
+        idx: number | null;
+      }[];
+      questions: {
+        /** Format: uuid */
+        id: string;
+        title: string;
+        /**
+         * @default single
+         * @enum {string}
+         */
+        type: 'single' | 'multiple' | 'boolean' | 'subjective';
+        subject: string;
+        position: number;
+      }[];
+    };
+    AiQuestionExplanationInput: {
+      /** Format: uuid */
+      questionId: string;
+      /** Format: uuid */
+      answerId: string;
+    };
+    AiQuestionDraftsInput: {
+      /** Format: uuid */
+      categoryId: string;
+      sourceLabel: string;
+      text: string;
+    };
+    AiQuestionDrafts: {
+      title: string;
+      /** @default 行测 */
+      examType: string;
+      subject: string;
+      /** Format: uuid */
+      categoryId: string;
+      /**
+       * @default single
+       * @enum {string}
+       */
+      type: 'single' | 'multiple' | 'boolean' | 'subjective';
+      /** @default  */
+      material: string;
+      options: {
+        key: string;
+        text: string;
+      }[];
+      correctAnswer: string[];
+      explanation: string;
+      /** @default 2 */
+      difficulty: number;
+      /** @default [] */
+      tags: string[];
+      /** @default null */
+      sourceId: string | null;
+      sourceLabel: string;
+      /** @constant */
+      status: 'pending';
+      /** @constant */
+      enabled: false;
+      /** @default null */
+      year: number | null;
+      /** @default null */
+      imageUrl: string | null;
+    }[];
+    AiSettingsInput: {
+      enabled: boolean;
+      baseUrl: string;
+      model: string;
+      /**
+       * @description 默认 max_completion_tokens
+       * @enum {string}
+       */
+      tokenLimitField?: 'max_completion_tokens' | 'max_tokens';
+      apiKey?: string | null;
+    };
+    AiSettings: {
+      enabled: boolean;
+      baseUrl: string;
+      model: string;
+      /** @enum {string} */
+      tokenLimitField: 'max_completion_tokens' | 'max_tokens';
+      hasApiKey: boolean;
+      /** @enum {string} */
+      source: 'database' | 'environment' | 'none';
+    };
+    AiStatus: {
+      enabled: boolean;
+    };
+    AiSettingsTest: {
+      ok: boolean;
+    };
+    AiText: {
+      text: string;
     };
     Job: {
       year: number;
@@ -1509,6 +1819,22 @@ export interface components {
       /** Format: date-time */
       updatedAt: string;
       count?: number;
+    };
+    CategoryProgress: {
+      name: string;
+      subject: string;
+      parentId: string | null;
+      sort: number;
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      count: number;
+      attempted: number;
+      attempts: number;
+      correctAttempts: number;
     };
     SourceRecord: {
       name: string;
@@ -2385,6 +2711,70 @@ export interface operations {
       };
     };
   };
+  get_question_categories_progress: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description 成功 */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['CategoryProgress'][];
+          };
+        };
+      };
+      /** @description 参数校验失败 */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 未登录 */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 无权限或来源不可信 */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 不存在 */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 冲突 */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求过快 */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   get_questions: {
     parameters: {
       query?: {
@@ -2392,10 +2782,14 @@ export interface operations {
         pageSize?: number;
         q?: string;
         categoryId?: string;
+        includeDescendants?: boolean;
         subject?: string;
         year?: number;
         mode?: 'sequential' | 'random' | 'chapter' | 'special' | 'past' | 'favorite' | 'wrong';
         after?: string;
+        paperId?: string;
+        since?: string;
+        mastered?: 'true' | 'false';
       };
       header?: never;
       path?: never;
@@ -2465,7 +2859,9 @@ export interface operations {
   };
   get_questions__id_: {
     parameters: {
-      query?: never;
+      query?: {
+        paperId?: string;
+      };
       header?: never;
       path: {
         id: string;
@@ -2482,6 +2878,220 @@ export interface operations {
         content: {
           'application/json': {
             data: components['schemas']['Question'];
+            meta?: {
+              page: number;
+              pageSize: number;
+              total: number;
+            };
+          };
+        };
+      };
+      /** @description 参数校验失败 */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 未登录 */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 无权限或来源不可信 */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 不存在 */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 冲突 */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求过快 */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  get_questions__id__solution: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description 成功 */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['QuestionSolution'];
+          };
+        };
+      };
+      /** @description 参数校验失败 */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 未登录 */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 无权限或来源不可信 */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 不存在 */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 冲突 */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求过快 */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  get_question_papers: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        q?: string;
+        subject?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description 成功 */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['SourcePaper'][];
+            meta?: {
+              page: number;
+              pageSize: number;
+              total: number;
+            };
+          };
+        };
+      };
+      /** @description 参数校验失败 */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 未登录 */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 无权限或来源不可信 */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 不存在 */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 冲突 */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求过快 */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  get_question_papers__id_: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description 成功 */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['SourcePaperDetail'];
             meta?: {
               page: number;
               pageSize: number;
@@ -2761,6 +3371,7 @@ export interface operations {
         page?: number;
         pageSize?: number;
         categoryId?: string;
+        includeDescendants?: boolean;
         subject?: string;
         sort?: string;
         since?: string;
@@ -2971,6 +3582,578 @@ export interface operations {
       };
       /** @description 请求过快 */
       429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  get_ai_status: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description 成功 */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['AiStatus'];
+          };
+        };
+      };
+      /** @description 参数校验失败 */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 未登录 */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 无权限或来源不可信 */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 不存在 */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 冲突 */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求过快 */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  post_ai_question_explanation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AiQuestionExplanationInput'];
+      };
+    };
+    responses: {
+      /** @description 成功 */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['AiText'];
+          };
+        };
+      };
+      /** @description 参数校验失败 */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 未登录 */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 无权限或来源不可信 */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 不存在 */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 冲突 */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求体或模型输入超过限额 */
+      413: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求过快 */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 网关返回错误或结果无法使用 */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 服务未配置、未启用或正忙 */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 网关请求超时 */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  post_ai_study_advice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description 成功 */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['AiText'];
+          };
+        };
+      };
+      /** @description 参数校验失败 */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 未登录 */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 无权限或来源不可信 */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 不存在 */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 冲突 */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求体或模型输入超过限额 */
+      413: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求过快 */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 网关返回错误或结果无法使用 */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 服务未配置、未启用或正忙 */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 网关请求超时 */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  post_ai_question_drafts: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AiQuestionDraftsInput'];
+      };
+    };
+    responses: {
+      /** @description 成功 */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['AiQuestionDrafts'];
+          };
+        };
+      };
+      /** @description 参数校验失败 */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 未登录 */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 无权限或来源不可信 */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 不存在 */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 冲突 */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求体或模型输入超过限额 */
+      413: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求过快 */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 网关返回错误或结果无法使用 */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 服务未配置、未启用或正忙 */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 网关请求超时 */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  get_ai_settings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description 成功 */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['AiSettings'];
+          };
+        };
+      };
+      /** @description 参数校验失败 */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 未登录 */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 无权限或来源不可信 */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 不存在 */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 冲突 */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求过快 */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  patch_ai_settings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AiSettingsInput'];
+      };
+    };
+    responses: {
+      /** @description 成功 */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['AiSettings'];
+          };
+        };
+      };
+      /** @description 参数校验失败 */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 未登录 */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 无权限或来源不可信 */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 不存在 */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 冲突 */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求过快 */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  post_ai_settings_test: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description 成功 */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['AiSettingsTest'];
+          };
+        };
+      };
+      /** @description 参数校验失败 */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 未登录 */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 无权限或来源不可信 */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 不存在 */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 冲突 */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求体或模型输入超过限额 */
+      413: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description 请求过快 */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 网关返回错误或结果无法使用 */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 服务未配置、未启用或正忙 */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description AI 网关请求超时 */
+      504: {
         headers: {
           [name: string]: unknown;
         };

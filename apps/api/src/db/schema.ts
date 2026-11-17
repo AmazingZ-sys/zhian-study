@@ -8,10 +8,18 @@ import {
   jsonb,
   uniqueIndex,
   index,
+  check,
   real,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
-import type { Profile, QuestionInput, JobInput, AnnouncementInput } from '@zhian/contracts';
+import { sql } from 'drizzle-orm';
+import type {
+  Profile,
+  QuestionInput,
+  JobInput,
+  AnnouncementInput,
+  SourcePaperMaterial,
+} from '@zhian/contracts';
 const base = () => ({
   id: uuid('id').defaultRandom().primaryKey(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -34,6 +42,19 @@ export const profiles = pgTable('user_profiles', {
     .unique(),
   data: jsonb('data').$type<Profile>().notNull(),
 });
+export const aiSettings = pgTable(
+  'ai_settings',
+  {
+    id: integer('id').primaryKey(),
+    enabled: boolean('enabled').notNull(),
+    baseUrl: text('base_url').notNull(),
+    model: text('model').notNull(),
+    tokenLimitField: text('token_limit_field').$type<'max_completion_tokens' | 'max_tokens'>().notNull(),
+    encryptedApiKey: text('encrypted_api_key'),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [check('ai_settings_singleton', sql`${table.id} = 1`)],
+);
 export const authSessions = pgTable(
   'auth_sessions',
   {
@@ -69,7 +90,9 @@ export const questions = pgTable(
   'questions',
   {
     ...base(),
+    externalKey: text('external_key').unique(),
     title: text('title').notNull(),
+    material: text('material').default('').notNull(),
     examType: text('exam_type').notNull(),
     subject: text('subject').notNull(),
     categoryId: uuid('category_id')
@@ -100,6 +123,42 @@ export const options = pgTable(
     text: text('text').notNull(),
   },
   (t) => [uniqueIndex('option_question_key').on(t.questionId, t.key)],
+);
+export const sourcePapers = pgTable(
+  'source_papers',
+  {
+    ...base(),
+    externalKey: text('external_key').notNull().unique(),
+    sourceId: uuid('source_id')
+      .references(() => sources.id)
+      .notNull(),
+    title: text('title').notNull(),
+    subject: text('subject').notNull(),
+    category: text('category').notNull(),
+    year: integer('year'),
+    questionCount: integer('question_count').notNull(),
+    materials: jsonb('materials').$type<SourcePaperMaterial[]>().default([]).notNull(),
+    raw: jsonb('raw').$type<Record<string, unknown>>().notNull(),
+  },
+  (t) => [index('source_papers_subject').on(t.subject)],
+);
+export const sourcePaperQuestions = pgTable(
+  'source_paper_questions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    paperId: uuid('paper_id')
+      .references(() => sourcePapers.id, { onDelete: 'cascade' })
+      .notNull(),
+    questionId: uuid('question_id')
+      .references(() => questions.id)
+      .notNull(),
+    position: integer('position').notNull(),
+    raw: jsonb('raw').$type<Record<string, unknown>>().notNull(),
+  },
+  (t) => [
+    uniqueIndex('source_paper_position').on(t.paperId, t.position),
+    index('source_paper_question').on(t.questionId),
+  ],
 );
 export const questionStates = pgTable(
   'user_question_states',

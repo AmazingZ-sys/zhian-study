@@ -1,8 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuth } from './stores/auth';
+const practiceLists = new Set(['/practice', '/wrong', '/favorites']);
 export const router = createRouter({
   history: createWebHistory(),
-  scrollBehavior: () => ({ top: 0 }),
+  scrollBehavior(to, from, savedPosition) {
+    if (!practiceLists.has(to.path)) return { top: 0 };
+    if (savedPosition) return savedPosition;
+    if (to.path === from.path) return { el: '#practice-results', top: 12 };
+    return { top: 0 };
+  },
   routes: [
     {
       path: '/',
@@ -20,6 +26,11 @@ export const router = createRouter({
       path: '/practice/:id',
       component: () => import('./pages/Question.vue'),
       meta: { title: '专注练习', auth: true },
+    },
+    {
+      path: '/question-papers/:id?',
+      component: () => import('./pages/QuestionPapers.vue'),
+      meta: { title: '原卷题库', auth: true },
     },
     {
       path: '/wrong',

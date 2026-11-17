@@ -8,6 +8,8 @@
 
 ## 本地启动
 
+2026-11-16 已按参考项目完成刷题与可配置 AI 重构，并将本地参考题库迁入开发库：55,721 题、2,455 套原卷、8,778 张图片。题库数据单独保存在 `data/question-bank/`，不会随 Git 或镜像传输。迁移、备份、重复执行及部署图片挂载说明见 [题库迁移记录](docs/QUESTION_BANK_MIGRATION.md)，AI 模型及中转站配置见 [AI 功能文档](docs/AI_FEATURES.md)。
+
 建议 Node.js 22、pnpm 10.26.2、Docker Desktop / Docker Compose。根工程 `engines.node` 限定 `>=20.19 <23`，避免 Vercel 自动选择更高 Node 主版本；Node.js 20.19.2 也已通过本地验证。
 
 ```bash
@@ -112,6 +114,8 @@ sudo env CONFIRM_DB_COMPATIBLE=yes ./rollback.sh v1.0.0
 ## 文档
 
 - [实施计划](docs/IMPLEMENTATION_PLAN.md) · [完整交付报告与缺口](docs/DELIVERY_REPORT.md)
+- [刷题模块重构方案](docs/PRACTICE_REFACTOR.md)
+- [AI 功能与中转站配置](docs/AI_FEATURES.md)
 - [产品](docs/PRODUCT_REQUIREMENTS.md) · [架构](docs/ARCHITECTURE.md) · [设计规范](docs/DESIGN_SYSTEM.md)
 - [数据库](docs/DATABASE.md) · [API](docs/API_SPEC.md) · [数据来源](docs/DATA_SOURCES.md)
 - [多端扩展](docs/MULTI_PLATFORM.md) · [测试结果](docs/TESTING.md)

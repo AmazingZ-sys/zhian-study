@@ -47,7 +47,7 @@ export async function saveQuestion(tx: Tx, input: QuestionInput, id?: string) {
     if (!row) fail(404, '题目不存在');
     await tx.delete(options).where(eq(options.questionId, id));
   } else [row] = await tx.insert(questions).values(data).returning();
-  await tx.insert(options).values(opts.map((o) => ({ ...o, questionId: row!.id })));
+  if (opts.length) await tx.insert(options).values(opts.map((o) => ({ ...o, questionId: row!.id })));
   return row!;
 }
 export async function saveJob(tx: Tx, input: JobInput, id?: string) {

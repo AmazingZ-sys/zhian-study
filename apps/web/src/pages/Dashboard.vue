@@ -14,21 +14,28 @@ import {
   Lightbulb,
   ChevronRight,
 } from 'lucide-vue-next';
-import type { Overview, Category, Job, DailyStat, Announcement } from '@zhian/contracts';
+import type { Overview, CategoryProgress, Job, DailyStat, Announcement } from '@zhian/contracts';
 import { api, errorText } from '../api';
 import { useAuth } from '../stores/auth';
 import AsyncState from '../components/AsyncState.vue';
 import DataBadge from '../components/DataBadge.vue';
 import StudyChart from '../components/StudyChart.vue';
+import { fetchCategoryProgress } from '../features/practice/api';
+import { buildCatalog } from '../features/practice/catalog';
 const auth = useAuth(),
   loading = ref(true),
   error = ref(''),
   overview = ref<Overview>(),
-  categories = ref<Category[]>([]),
+  categories = ref<CategoryProgress[]>([]),
   jobs = ref<Job[]>([]),
   daily = ref<DailyStat[]>([]),
   announcements = ref<Announcement[]>([]);
 const icons = [Lightbulb, Languages, Calculator, Shapes, ChartColumn];
+const practiceModules = computed(() =>
+  buildCatalog(categories.value).flatMap(({ subject, rows }) =>
+    rows.filter((row) => row.depth === 0).map((row) => ({ ...row, subject })),
+  ),
+);
 const date = new Intl.DateTimeFormat('zh-CN', {
   month: 'long',
   day: 'numeric',
@@ -44,13 +51,13 @@ async function load() {
   try {
     const [a, b, c, d, e] = await Promise.all([
       api.get('/statistics/overview'),
-      api.get('/question-categories'),
+      fetchCategoryProgress(),
       api.get('/jobs', { params: { pageSize: 3 } }),
       api.get('/statistics/daily'),
       api.get('/announcements', { params: { pageSize: 2 } }),
     ]);
     overview.value = a.data.data;
-    categories.value = b.data.data;
+    categories.value = b;
     jobs.value = c.data.data;
     daily.value = d.data.data;
     announcements.value = e.data.data;
@@ -119,13 +126,16 @@ onMounted(load);
             </div>
             <div class="practice-grid">
               <RouterLink
-                v-for="(c, i) in categories"
+                v-for="(c, i) in practiceModules"
                 :key="c.id"
-                :to="{ path: '/practice', query: { categoryId: c.id } }"
+                :to="{
+                  path: '/practice',
+                  query: { categoryId: c.id, includeDescendants: c.includeDescendants ? 'true' : undefined },
+                }"
                 class="practice-tile"
                 ><span class="tile-icon"><component :is="icons[i % icons.length]" :size="21" /></span
                 ><strong>{{ c.subject }}</strong
-                ><small>{{ c.name }} · {{ c.count }} 题</small></RouterLink
+                ><small>{{ c.name }} · {{ c.progress.count }} 题</small></RouterLink
               ><RouterLink to="/wrong" class="practice-tile"
                 ><span class="tile-icon"><BookOpen :size="21" /></span><strong>错题再练</strong
                 ><small>{{ overview.wrong }} 道待复盘</small></RouterLink

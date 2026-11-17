@@ -11,9 +11,14 @@ import {
   sourceSchema,
   categorySchema,
   planSchema,
+  aiQuestionDraftsInputSchema,
+  aiQuestionExplanationInputSchema,
+  aiSettingsInputSchema,
+  aiSettingsSchema,
 } from '@zhian/contracts';
 const json = (schema: z.ZodType) => z.toJSONSchema(schema, { unrepresentable: 'any', io: 'input' });
 const base = { id: z.uuid(), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime() };
+const count = z.number().int().nonnegative();
 const user = z.object({
   id: z.uuid(),
   email: z.email(),
@@ -31,6 +36,18 @@ const answer = z.object({
   seconds: z.number(),
   createdAt: z.iso.datetime(),
 });
+const sourcePaper = z.object({
+  ...base,
+  sourceId: z.uuid(),
+  title: z.string(),
+  subject: z.string(),
+  category: z.string(),
+  year: z.number().int().nullable(),
+  questionCount: count,
+  materials: z.array(
+    z.object({ title: z.string(), text: z.string(), pdf: z.string(), idx: z.number().nullable() }),
+  ),
+});
 export const schemas = {
   Auth: json(authSchema),
   Profile: json(profileSchema),
@@ -45,9 +62,20 @@ export const schemas = {
   Plan: json(planSchema),
   User: json(user),
   AuthResult: json(
-    z.object({ user, expiresIn:z.number(), accessToken: z.string().optional(), refreshToken: z.string().optional() }),
+    z.object({
+      user,
+      expiresIn: z.number(),
+      accessToken: z.string().optional(),
+      refreshToken: z.string().optional(),
+    }),
   ),
-  TokenResult: json(z.object({expiresIn:z.number(),accessToken:z.string().optional(),refreshToken:z.string().optional()})),
+  TokenResult: json(
+    z.object({
+      expiresIn: z.number(),
+      accessToken: z.string().optional(),
+      refreshToken: z.string().optional(),
+    }),
+  ),
   UserProfile: json(z.object({ user, profile: profileSchema })),
   Question: json(
     question.extend({
@@ -58,6 +86,38 @@ export const schemas = {
     }),
   ),
   AnswerResult: json(answer),
+  QuestionSolution: json(z.object({ explanation: z.string() })),
+  SourcePaper: json(sourcePaper),
+  SourcePaperDetail: json(
+    sourcePaper.extend({
+      questions: z.array(
+        z.object({
+          id: z.uuid(),
+          title: z.string(),
+          type: questionSchema.shape.type,
+          subject: z.string(),
+          position: z.number().int(),
+        }),
+      ),
+    }),
+  ),
+  AiQuestionExplanationInput: json(aiQuestionExplanationInputSchema),
+  AiQuestionDraftsInput: json(aiQuestionDraftsInputSchema),
+  AiQuestionDrafts: z.toJSONSchema(
+    z.array(questionSchema.safeExtend({ status: z.literal('pending'), enabled: z.literal(false) })).max(5),
+    { unrepresentable: 'any', io: 'output' },
+  ),
+  AiSettingsInput: json(
+    aiSettingsInputSchema.extend({
+      tokenLimitField: aiSettingsSchema.shape.tokenLimitField
+        .optional()
+        .describe('默认 max_completion_tokens'),
+    }),
+  ),
+  AiSettings: json(aiSettingsSchema),
+  AiStatus: json(z.object({ enabled: z.boolean() })),
+  AiSettingsTest: json(z.object({ ok: z.boolean() })),
+  AiText: json(z.object({ text: z.string() })),
   Job: json(
     z.object(jobSchema.shape).extend({ ...base, version: z.number(), favorite: z.boolean().optional() }),
   ),
@@ -65,6 +125,17 @@ export const schemas = {
     z.object(announcementSchema.shape).extend({ ...base, favorite: z.boolean().optional() }),
   ),
   CategoryRecord: json(categorySchema.extend({ ...base, count: z.number().optional() })),
+  CategoryProgress: json(
+    categorySchema.extend({
+      ...base,
+      parentId: z.uuid().nullable(),
+      sort: z.number().int(),
+      count,
+      attempted: count,
+      attempts: count,
+      correctAttempts: count,
+    }),
+  ),
   SourceRecord: json(sourceSchema.extend(base)),
   PlanRecord: json(planSchema.extend({ ...base, userId: z.uuid() })),
   Overview: json(
@@ -172,14 +243,25 @@ route('/users/me/password', 'patch', '修改密码并撤销所有会话', 'Passw
 route('/users/me/sessions', 'get', '登录设备');
 route('/users/me/sessions/{id}', 'delete', '撤销设备');
 route('/question-categories', 'get', '分类树', undefined, true);
+route('/question-categories/progress', 'get', '分类及个人刷题进度');
 route('/questions', 'get', '题库检索', undefined, true);
 route('/questions/{id}', 'get', '题目（不含答案）', undefined, true);
+route('/questions/{id}/solution', 'get', '登录后查看主观阅读题参考解析（不计分）');
+route('/question-papers', 'get', '原试卷目录（不含原始数据）', undefined, true);
+route('/question-papers/{id}', 'get', '原试卷材料与题目顺序（不含答案）', undefined, true);
 route('/questions/{id}/answer', 'post', '提交答案', 'AnswerInput');
 route('/questions/{id}/history', 'get', '答题历史');
 route('/questions/{id}/note', 'patch', '更新笔记', 'NoteInput');
 route('/wrong-questions', 'get', '错题列表');
 route('/wrong-questions/{id}/retry', 'post', '错题重做');
 route('/wrong-questions/{id}/mastered', 'patch', '标记掌握', 'MasteredInput');
+route('/ai/status', 'get', 'AI 服务状态');
+route('/ai/question-explanation', 'post', '生成答题后的 AI 解析', 'AiQuestionExplanationInput');
+route('/ai/study-advice', 'post', '生成近 30 天学习建议');
+route('/ai/question-drafts', 'post', '管理员生成题目导入草稿', 'AiQuestionDraftsInput');
+route('/ai/settings', 'get', '管理员读取 AI 网关配置');
+route('/ai/settings', 'patch', '管理员保存 AI 网关配置', 'AiSettingsInput');
+route('/ai/settings/test', 'post', '管理员测试 AI 网关连接');
 for (const resource of ['questions', 'jobs', 'announcements'])
   for (const method of ['post', 'delete'])
     route(`/${resource}/{id}/favorite`, method, method === 'post' ? '收藏' : '取消收藏');
@@ -224,7 +306,13 @@ route('/admin/imports/{id}/errors', 'get', '导出错误 CSV');
 route('/practice-sessions', 'post', '建立练习会话');
 route('/admin/exports/{kind}', 'get', '分页导出 JSON/CSV/XLSX');
 // Specific response contracts replace generic envelopes for the shared public client.
-function response(path: string, method: string, schema: keyof typeof schemas, list = false, status = 200) {
+function response(
+  path: string,
+  method: string,
+  schema: keyof typeof schemas,
+  list: boolean | 'unpaginated' | 'item' = false,
+  status = 200,
+) {
   const operation = paths[path]![method] as { responses: Record<number, unknown> };
   delete operation.responses[200];
   const item = { $ref: `#/components/schemas/${schema}` };
@@ -232,16 +320,18 @@ function response(path: string, method: string, schema: keyof typeof schemas, li
     type: 'object',
     required: ['data'],
     properties: {
-      data: list ? { type: 'array', items: item } : item,
-      meta: {
-        type: 'object',
-        required: ['page', 'pageSize', 'total'],
-        properties: {
-          page: { type: 'integer' },
-          pageSize: { type: 'integer' },
-          total: { type: 'integer' },
+      data: list === true || list === 'unpaginated' ? { type: 'array', items: item } : item,
+      ...(typeof list === 'boolean' && {
+        meta: {
+          type: 'object',
+          required: ['page', 'pageSize', 'total'],
+          properties: {
+            page: { type: 'integer' },
+            pageSize: { type: 'integer' },
+            total: { type: 'integer' },
+          },
         },
-      },
+      }),
     },
   };
   operation.responses[status] = {
@@ -250,19 +340,50 @@ function response(path: string, method: string, schema: keyof typeof schemas, li
   };
 }
 for (const method of ['register', 'login', 'refresh'])
-  response('/auth/' + method, 'post', method === 'refresh' ? 'TokenResult' : 'AuthResult', false, method === 'register' ? 201 : 200);
+  response(
+    '/auth/' + method,
+    'post',
+    method === 'refresh' ? 'TokenResult' : 'AuthResult',
+    false,
+    method === 'register' ? 201 : 200,
+  );
 response('/users/me', 'get', 'UserProfile');
 response('/users/me', 'patch', 'Profile');
 response('/auth/me', 'get', 'User');
 response('/questions', 'get', 'Question', true);
 response('/questions/{id}', 'get', 'Question');
+response('/questions/{id}/solution', 'get', 'QuestionSolution', 'item');
+response('/question-papers', 'get', 'SourcePaper', true);
+response('/question-papers/{id}', 'get', 'SourcePaperDetail');
 response('/questions/{id}/answer', 'post', 'AnswerResult');
 response('/questions/{id}/history', 'get', 'AnswerResult', true);
 response('/wrong-questions', 'get', 'Question', true);
 response('/question-categories', 'get', 'CategoryRecord', true);
+response('/question-categories/progress', 'get', 'CategoryProgress', 'unpaginated');
 response('/statistics/overview', 'get', 'Overview');
 response('/statistics/daily', 'get', 'DailyStat', true);
 response('/statistics/subjects', 'get', 'SubjectStat', true);
+response('/ai/status', 'get', 'AiStatus', 'item');
+response('/ai/question-explanation', 'post', 'AiText', 'item');
+response('/ai/study-advice', 'post', 'AiText', 'item');
+response('/ai/question-drafts', 'post', 'AiQuestionDrafts', 'item');
+response('/ai/settings', 'get', 'AiSettings', 'item');
+response('/ai/settings', 'patch', 'AiSettings', 'item');
+response('/ai/settings/test', 'post', 'AiSettingsTest', 'item');
+for (const path of [
+  '/ai/question-explanation',
+  '/ai/study-advice',
+  '/ai/question-drafts',
+  '/ai/settings/test',
+]) {
+  const { responses } = paths[path]!.post as { responses: Record<number, unknown> };
+  Object.assign(responses, {
+    413: { description: '请求体或模型输入超过限额' },
+    502: { description: 'AI 网关返回错误或结果无法使用' },
+    503: { description: 'AI 服务未配置、未启用或正忙' },
+    504: { description: 'AI 网关请求超时' },
+  });
+}
 for (const [resource, schema] of [
   ['jobs', 'Job'],
   ['announcements', 'Announcement'],
@@ -279,10 +400,12 @@ const queryFields: Record<string, Record<string, unknown>> = {
   pageSize: { type: 'integer', minimum: 1, maximum: 100 },
   q: { type: 'string', maxLength: 100 },
   categoryId: { type: 'string', format: 'uuid' },
+  includeDescendants: { type: 'boolean', default: false },
   subject: { type: 'string' },
   year: { type: 'integer' },
   mode: { type: 'string', enum: ['sequential', 'random', 'chapter', 'special', 'past', 'favorite', 'wrong'] },
   after: { type: 'string', format: 'uuid' },
+  paperId: { type: 'string', format: 'uuid' },
   province: { type: 'string' },
   city: { type: 'string' },
   examType: { type: 'string' },
@@ -300,8 +423,33 @@ const queryFields: Record<string, Record<string, unknown>> = {
   mastered: { type: 'string', enum: ['true', 'false'] },
 };
 for (const [path, fields] of Object.entries({
-  '/questions': ['page', 'pageSize', 'q', 'categoryId', 'subject', 'year', 'mode', 'after'],
-  '/wrong-questions': ['page', 'pageSize', 'categoryId', 'subject', 'sort', 'since', 'mastered'],
+  '/questions': [
+    'page',
+    'pageSize',
+    'q',
+    'categoryId',
+    'includeDescendants',
+    'subject',
+    'year',
+    'mode',
+    'after',
+    'paperId',
+    'since',
+    'mastered',
+  ],
+  '/question-papers': ['page', 'pageSize', 'q', 'subject'],
+  '/question-papers/{id}': ['page', 'pageSize'],
+  '/questions/{id}': ['paperId'],
+  '/wrong-questions': [
+    'page',
+    'pageSize',
+    'categoryId',
+    'includeDescendants',
+    'subject',
+    'sort',
+    'since',
+    'mastered',
+  ],
   '/jobs': [
     'page',
     'pageSize',

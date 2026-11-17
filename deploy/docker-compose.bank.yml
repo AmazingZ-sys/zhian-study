@@ -1,0 +1,10 @@
+# Optional override: docker compose -f deploy/docker-compose.prod.yml -f deploy/docker-compose.bank.yml ...
+services:
+  api:
+    environment:
+      QUESTION_BANK_ASSET_DIR: /app/question-bank-assets
+    volumes:
+      - type: bind
+        source: ${QUESTION_BANK_HOST_ASSET_DIR:?Set an absolute path to the imported bank assets}
+        target: /app/question-bank-assets
+        read_only: true

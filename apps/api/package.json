@@ -4,11 +4,12 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file=../../.env src/index.ts",
-    "build": "tsup src/index.ts src/db/migrate.ts src/db/seed.ts --format esm --out-dir dist --clean --no-splitting",
+    "build": "tsup --format esm --out-dir dist --clean --no-splitting",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file=../../.env src/db/migrate.ts",
     "db:seed": "tsx --env-file=../../.env src/db/seed.ts",
+    "bank:import": "tsx scripts/import-question-bank.ts",
     "admin:promote": "tsx --env-file=../../.env src/db/promote.ts"
   },
   "dependencies": {

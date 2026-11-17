@@ -162,10 +162,14 @@
           "type": {
             "default": "single",
             "type": "string",
-            "enum": ["single", "multiple", "boolean"]
+            "enum": ["single", "multiple", "boolean", "subjective"]
+          },
+          "material": {
+            "default": "",
+            "type": "string",
+            "maxLength": 500000
           },
           "options": {
-            "minItems": 2,
             "maxItems": 8,
             "type": "array",
             "items": {
@@ -185,7 +189,6 @@
             }
           },
           "correctAnswer": {
-            "minItems": 1,
             "maxItems": 8,
             "type": "array",
             "items": {
@@ -994,10 +997,14 @@
           "type": {
             "default": "single",
             "type": "string",
-            "enum": ["single", "multiple", "boolean"]
+            "enum": ["single", "multiple", "boolean", "subjective"]
+          },
+          "material": {
+            "default": "",
+            "type": "string",
+            "maxLength": 500000
           },
           "options": {
-            "minItems": 2,
             "maxItems": 8,
             "type": "array",
             "items": {
@@ -1160,6 +1167,513 @@
           }
         },
         "required": ["id", "correct", "correctAnswer", "explanation", "answer", "seconds", "createdAt"]
+      },
+      "QuestionSolution": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "explanation": {
+            "type": "string"
+          }
+        },
+        "required": ["explanation"]
+      },
+      "SourcePaper": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "questionCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "materials": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "pdf": {
+                  "type": "string"
+                },
+                "idx": {
+                  "type": ["number", "null"]
+                }
+              },
+              "required": ["title", "text", "pdf", "idx"]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "updatedAt",
+          "sourceId",
+          "title",
+          "subject",
+          "category",
+          "year",
+          "questionCount",
+          "materials"
+        ]
+      },
+      "SourcePaperDetail": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "questionCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "materials": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "pdf": {
+                  "type": "string"
+                },
+                "idx": {
+                  "type": ["number", "null"]
+                }
+              },
+              "required": ["title", "text", "pdf", "idx"]
+            }
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "type": {
+                  "default": "single",
+                  "type": "string",
+                  "enum": ["single", "multiple", "boolean", "subjective"]
+                },
+                "subject": {
+                  "type": "string"
+                },
+                "position": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": ["id", "title", "subject", "position"]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "updatedAt",
+          "sourceId",
+          "title",
+          "subject",
+          "category",
+          "year",
+          "questionCount",
+          "materials",
+          "questions"
+        ]
+      },
+      "AiQuestionExplanationInput": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "answerId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": ["questionId", "answerId"],
+        "additionalProperties": false
+      },
+      "AiQuestionDraftsInput": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "sourceLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12000
+          }
+        },
+        "required": ["categoryId", "sourceLabel", "text"],
+        "additionalProperties": false
+      },
+      "AiQuestionDrafts": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "maxItems": 5,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "examType": {
+              "default": "行测",
+              "type": "string",
+              "maxLength": 40
+            },
+            "subject": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "categoryId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "type": {
+              "default": "single",
+              "type": "string",
+              "enum": ["single", "multiple", "boolean", "subjective"]
+            },
+            "material": {
+              "default": "",
+              "type": "string",
+              "maxLength": 500000
+            },
+            "options": {
+              "maxItems": 8,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "pattern": "^[A-H]$"
+                  },
+                  "text": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 5000
+                  }
+                },
+                "required": ["key", "text"],
+                "additionalProperties": false
+              }
+            },
+            "correctAnswer": {
+              "maxItems": 8,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-H]$"
+              }
+            },
+            "explanation": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20000
+            },
+            "difficulty": {
+              "default": 2,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            },
+            "tags": {
+              "default": [],
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 40
+              }
+            },
+            "sourceId": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sourceLabel": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "status": {
+              "type": "string",
+              "const": "pending"
+            },
+            "enabled": {
+              "type": "boolean",
+              "const": false
+            },
+            "year": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1990,
+                  "maximum": 2100
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "imageUrl": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2000,
+                  "format": "uri"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "title",
+            "examType",
+            "subject",
+            "categoryId",
+            "type",
+            "material",
+            "options",
+            "correctAnswer",
+            "explanation",
+            "difficulty",
+            "tags",
+            "sourceId",
+            "sourceLabel",
+            "status",
+            "enabled",
+            "year",
+            "imageUrl"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "AiSettingsInput": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "baseUrl": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "tokenLimitField": {
+            "description": "默认 max_completion_tokens",
+            "type": "string",
+            "enum": ["max_completion_tokens", "max_tokens"]
+          },
+          "apiKey": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": ["enabled", "baseUrl", "model"],
+        "additionalProperties": false
+      },
+      "AiSettings": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "baseUrl": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "tokenLimitField": {
+            "type": "string",
+            "enum": ["max_completion_tokens", "max_tokens"]
+          },
+          "hasApiKey": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["database", "environment", "none"]
+          }
+        },
+        "required": ["enabled", "baseUrl", "model", "tokenLimitField", "hasApiKey", "source"]
+      },
+      "AiStatus": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": ["enabled"]
+      },
+      "AiSettingsTest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": ["ok"]
+      },
+      "AiText": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": ["text"]
       },
       "Job": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1558,6 +2072,87 @@
           }
         },
         "required": ["name", "subject", "id", "createdAt", "updatedAt"]
+      },
+      "CategoryProgress": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sort": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "attempted": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "attempts": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "correctAttempts": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "name",
+          "subject",
+          "parentId",
+          "sort",
+          "id",
+          "createdAt",
+          "updatedAt",
+          "count",
+          "attempted",
+          "attempts",
+          "correctAttempts"
+        ]
       },
       "SourceRecord": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2578,6 +3173,60 @@
         }
       }
     },
+    "/question-categories/progress": {
+      "get": {
+        "summary": "分类及个人刷题进度",
+        "operationId": "get_question_categories_progress",
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CategoryProgress"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数校验失败"
+          },
+          "401": {
+            "description": "未登录"
+          },
+          "403": {
+            "description": "无权限或来源不可信"
+          },
+          "404": {
+            "description": "不存在"
+          },
+          "409": {
+            "description": "冲突"
+          },
+          "429": {
+            "description": "请求过快"
+          }
+        }
+      }
+    },
     "/questions": {
       "get": {
         "summary": "题库检索",
@@ -2622,6 +3271,15 @@
             }
           },
           {
+            "name": "includeDescendants",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "subject",
             "in": "query",
             "required": false,
@@ -2653,6 +3311,33 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "paperId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "mastered",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
             }
           }
         ],
@@ -2726,6 +3411,15 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "paperId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -2739,6 +3433,254 @@
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/Question"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": ["page", "pageSize", "total"],
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "pageSize": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数校验失败"
+          },
+          "401": {
+            "description": "未登录"
+          },
+          "403": {
+            "description": "无权限或来源不可信"
+          },
+          "404": {
+            "description": "不存在"
+          },
+          "409": {
+            "description": "冲突"
+          },
+          "429": {
+            "description": "请求过快"
+          }
+        }
+      }
+    },
+    "/questions/{id}/solution": {
+      "get": {
+        "summary": "登录后查看主观阅读题参考解析（不计分）",
+        "operationId": "get_questions__id__solution",
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/QuestionSolution"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数校验失败"
+          },
+          "401": {
+            "description": "未登录"
+          },
+          "403": {
+            "description": "无权限或来源不可信"
+          },
+          "404": {
+            "description": "不存在"
+          },
+          "409": {
+            "description": "冲突"
+          },
+          "429": {
+            "description": "请求过快"
+          }
+        }
+      }
+    },
+    "/question-papers": {
+      "get": {
+        "summary": "原试卷目录（不含原始数据）",
+        "operationId": "get_question_papers",
+        "security": [],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SourcePaper"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": ["page", "pageSize", "total"],
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "pageSize": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数校验失败"
+          },
+          "401": {
+            "description": "未登录"
+          },
+          "403": {
+            "description": "无权限或来源不可信"
+          },
+          "404": {
+            "description": "不存在"
+          },
+          "409": {
+            "description": "冲突"
+          },
+          "429": {
+            "description": "请求过快"
+          }
+        }
+      }
+    },
+    "/question-papers/{id}": {
+      "get": {
+        "summary": "原试卷材料与题目顺序（不含答案）",
+        "operationId": "get_question_papers__id_",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/SourcePaperDetail"
                     },
                     "meta": {
                       "type": "object",
@@ -3071,6 +4013,15 @@
             }
           },
           {
+            "name": "includeDescendants",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "subject",
             "in": "query",
             "required": false,
@@ -3313,6 +4264,439 @@
           },
           "429": {
             "description": "请求过快"
+          }
+        }
+      }
+    },
+    "/ai/status": {
+      "get": {
+        "summary": "AI 服务状态",
+        "operationId": "get_ai_status",
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AiStatus"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数校验失败"
+          },
+          "401": {
+            "description": "未登录"
+          },
+          "403": {
+            "description": "无权限或来源不可信"
+          },
+          "404": {
+            "description": "不存在"
+          },
+          "409": {
+            "description": "冲突"
+          },
+          "429": {
+            "description": "请求过快"
+          }
+        }
+      }
+    },
+    "/ai/question-explanation": {
+      "post": {
+        "summary": "生成答题后的 AI 解析",
+        "operationId": "post_ai_question_explanation",
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiQuestionExplanationInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AiText"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数校验失败"
+          },
+          "401": {
+            "description": "未登录"
+          },
+          "403": {
+            "description": "无权限或来源不可信"
+          },
+          "404": {
+            "description": "不存在"
+          },
+          "409": {
+            "description": "冲突"
+          },
+          "413": {
+            "description": "请求体或模型输入超过限额"
+          },
+          "429": {
+            "description": "请求过快"
+          },
+          "502": {
+            "description": "AI 网关返回错误或结果无法使用"
+          },
+          "503": {
+            "description": "AI 服务未配置、未启用或正忙"
+          },
+          "504": {
+            "description": "AI 网关请求超时"
+          }
+        }
+      }
+    },
+    "/ai/study-advice": {
+      "post": {
+        "summary": "生成近 30 天学习建议",
+        "operationId": "post_ai_study_advice",
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AiText"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数校验失败"
+          },
+          "401": {
+            "description": "未登录"
+          },
+          "403": {
+            "description": "无权限或来源不可信"
+          },
+          "404": {
+            "description": "不存在"
+          },
+          "409": {
+            "description": "冲突"
+          },
+          "413": {
+            "description": "请求体或模型输入超过限额"
+          },
+          "429": {
+            "description": "请求过快"
+          },
+          "502": {
+            "description": "AI 网关返回错误或结果无法使用"
+          },
+          "503": {
+            "description": "AI 服务未配置、未启用或正忙"
+          },
+          "504": {
+            "description": "AI 网关请求超时"
+          }
+        }
+      }
+    },
+    "/ai/question-drafts": {
+      "post": {
+        "summary": "管理员生成题目导入草稿",
+        "operationId": "post_ai_question_drafts",
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiQuestionDraftsInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AiQuestionDrafts"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数校验失败"
+          },
+          "401": {
+            "description": "未登录"
+          },
+          "403": {
+            "description": "无权限或来源不可信"
+          },
+          "404": {
+            "description": "不存在"
+          },
+          "409": {
+            "description": "冲突"
+          },
+          "413": {
+            "description": "请求体或模型输入超过限额"
+          },
+          "429": {
+            "description": "请求过快"
+          },
+          "502": {
+            "description": "AI 网关返回错误或结果无法使用"
+          },
+          "503": {
+            "description": "AI 服务未配置、未启用或正忙"
+          },
+          "504": {
+            "description": "AI 网关请求超时"
+          }
+        }
+      }
+    },
+    "/ai/settings": {
+      "get": {
+        "summary": "管理员读取 AI 网关配置",
+        "operationId": "get_ai_settings",
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AiSettings"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数校验失败"
+          },
+          "401": {
+            "description": "未登录"
+          },
+          "403": {
+            "description": "无权限或来源不可信"
+          },
+          "404": {
+            "description": "不存在"
+          },
+          "409": {
+            "description": "冲突"
+          },
+          "429": {
+            "description": "请求过快"
+          }
+        }
+      },
+      "patch": {
+        "summary": "管理员保存 AI 网关配置",
+        "operationId": "patch_ai_settings",
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiSettingsInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AiSettings"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数校验失败"
+          },
+          "401": {
+            "description": "未登录"
+          },
+          "403": {
+            "description": "无权限或来源不可信"
+          },
+          "404": {
+            "description": "不存在"
+          },
+          "409": {
+            "description": "冲突"
+          },
+          "429": {
+            "description": "请求过快"
+          }
+        }
+      }
+    },
+    "/ai/settings/test": {
+      "post": {
+        "summary": "管理员测试 AI 网关连接",
+        "operationId": "post_ai_settings_test",
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AiSettingsTest"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数校验失败"
+          },
+          "401": {
+            "description": "未登录"
+          },
+          "403": {
+            "description": "无权限或来源不可信"
+          },
+          "404": {
+            "description": "不存在"
+          },
+          "409": {
+            "description": "冲突"
+          },
+          "413": {
+            "description": "请求体或模型输入超过限额"
+          },
+          "429": {
+            "description": "请求过快"
+          },
+          "502": {
+            "description": "AI 网关返回错误或结果无法使用"
+          },
+          "503": {
+            "description": "AI 服务未配置、未启用或正忙"
+          },
+          "504": {
+            "description": "AI 网关请求超时"
           }
         }
       }
